@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;NON_KEYWORDS=KEY,VALUE}
+    username: ${TEST_DB_USER:sa}
+    password: ${TEST_DB_PSWD:}
+    driver-class-name: ${TEST_DB_DRIVER:org.h2.Driver}
+
+  jpa:
+    database-platform: ${TEST_DB_PLATFORM:org.hibernate.dialect.H2Dialect}
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: ${TEST_DB_PLATFORM:org.hibernate.dialect.H2Dialect}
+        format_sql: true
+    show-sql: true

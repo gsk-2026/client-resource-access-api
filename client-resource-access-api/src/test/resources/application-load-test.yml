@@ -1,0 +1,29 @@
+name: Client Resource Access Load Test
+
+env:
+  LOOPS: 100
+  PAUSE_SECONDS: 3
+
+spring:
+  application:
+    name: client-resource-access-api
+
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          fetch_size: 100
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
