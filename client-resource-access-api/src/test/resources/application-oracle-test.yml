@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    # Uses env var ORACLE_DB_URL. If missing, falls back to the local docker string
+    url: ${TEST_DB_URL:jdbc:oracle:thin:@10.0.0.252:1521:free}
+    username: ${TEST_DB_USER:system}
+    password: ${TEST_DB_PSWD:Sankui2026}
+    driver-class-name: ${TEST_DB_DRIVER:oracle.jdbc.OracleDriver}
+  jpa:
+    database-platform: ${TEST_DB_PLATFORM:org.hibernate.dialect.OracleDialect}
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+
