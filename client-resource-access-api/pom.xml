@@ -200,9 +200,26 @@
                 <version>3.5.6</version>
                 <executions>
                     <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
+                        <id>it</id>
+                        <goals><goal>integration-test</goal></goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>e2e</id>
+                        <goals><goal>integration-test</goal></goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*E2E.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals><goal>verify</goal></goals>
                     </execution>
                 </executions>
             </plugin>
@@ -235,7 +252,7 @@
                         <configuration>
                             <jvmArguments>
                                 -Dspring.profiles.active=qatest
-                                -Dserver.port=8080
+                                <!-- -Dserver.port=8181  -->
                             </jvmArguments>
                         </configuration>
                         <executions>
