@@ -1,22 +1,5 @@
 @echo off
 
-echo =========================
-echo Java Version
-echo =========================
-java -version
-
-echo.
-echo =========================
-echo JAVA_HOME
-echo =========================
-echo %JAVA_HOME%
-
-echo.
-echo =========================
-echo Maven Version
-echo =========================
-mvn -version
-
 echo ======================================
 echo DreamTech Client Resource Access API
 echo ======================================
