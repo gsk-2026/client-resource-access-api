@@ -5,12 +5,12 @@ echo DreamTech Client Resource Access API
 echo ======================================
 
 echo.
-echo Cleaning project...
+echo Cleaning the build...
 call mvn clean
 
 echo.
-echo Running Verification project...
-call mvn verify -Pqatest
+echo Packaging the application...
+call mvn package
 
 if errorlevel 1 (
     echo.

@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("h2mem-test") // Loads application-h2mem-test.yml
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // Forces Spring to use your YAML parameters
 @AutoConfigureMockMvc
-class ClientResourceAccessApiIT {
+class ClientResourceAccessIT {
     /*  Integration Test for all Controllers Services Repositories.
         This is the Integration over all layers of :
                 ClientController, ClientService, ClientRepository;

@@ -31,7 +31,7 @@ import java.util.Optional;
 @SpringBootTest(properties = "spring.main.lazy-initialization=true")
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("h2mem-test") // This tells Spring to load application-h2mem-test.yml
-public class ResourceControllerAndServiceIT {
+public class Resource4ControllerAndServiceIT {
     /*  Integration Test for ResourceController and ResourceService.
         Only ResourceController (REAL) and ResourceService (REAL) are integrated,
         But ResourceRepository (MOCKITO MOCK) is mocked separately.

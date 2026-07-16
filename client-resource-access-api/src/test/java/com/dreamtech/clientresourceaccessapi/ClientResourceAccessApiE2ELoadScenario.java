@@ -7,6 +7,7 @@ import static io.gatling.javaapi.http.HttpDsl.*;
 import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Stream;
@@ -19,10 +20,13 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
             .acceptHeader("application/json")
             .contentTypeHeader("application/json");
 */
+
     private static final String BASE_URL =
             System.getProperty(
                     "gatling.baseUrl",
-                    "http://localhost:8080/api/v1");
+                    "http://localhost:" +
+                            getPortFromProperties() +
+                            "/api/v1");
 
     private final HttpProtocolBuilder httpProtocol = http
             .baseUrl(BASE_URL)
@@ -326,4 +330,21 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
         );
     }
 
+    private static String getPortFromProperties() {
+        Properties prop = new Properties();
+
+        try (InputStream input = ClientResourceAccessApiE2ELoadScenario.class
+                .getClassLoader()
+                .getResourceAsStream("application.properties")) {
+
+            if (input == null) {
+                return "8080"; // Default fallback if file is missing
+            }
+            prop.load(input);
+              return prop.getProperty("server.port", "8080");
+
+        } catch (Exception ex) {
+            return "8080"; // Default fallback on error
+        }
+    }
 }

@@ -7,9 +7,11 @@ import org.testcontainers.oracle.OracleContainer;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.time.Duration;
+import java.util.Properties;
 
 
 public class ClientResourceAccessApiE2ELoadRunner {
@@ -39,7 +41,8 @@ public class ClientResourceAccessApiE2ELoadRunner {
         }));
 
         // 3 Construct custom configuration strings into an array that behaves like command line inputs
-        String serverPort = "8080";
+        String serverPort = getPortFromProperties();
+
         String[] customizedArgs = new String[] {
                 "--spring.profiles.active=load-test",
                 "--spring.jpa.hibernate.ddl-auto=update",
@@ -128,6 +131,23 @@ public class ClientResourceAccessApiE2ELoadRunner {
         }
     }
 
+    private static String getPortFromProperties() {
+        Properties prop = new Properties();
+
+        try (InputStream input = ClientResourceAccessApiE2ELoadRunner.class
+                .getClassLoader()
+                .getResourceAsStream("application.properties")) {
+
+            if (input == null) {
+                return  "8080"; // Default fallback if file is missing
+            }
+            prop.load(input);
+            return prop.getProperty("server.port", "8080");
+
+        } catch (Exception ex) {
+            return "8080"; // Default fallback on error
+        }
+    }
 }
 
 
