@@ -9,7 +9,7 @@ pipeline {
             }
         }
 
-        stage('Verify Build') {
+        stage('*** Verify Build') {
             steps {
                 dir('client-resource-access-api') {
                     bat 'build_clean_verify.bat'
