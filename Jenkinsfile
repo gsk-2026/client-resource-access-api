@@ -1,4 +1,6 @@
 pipeline {
+    echo 'Java-api pipeline...'
+
     agent any
 
     tools {
@@ -15,9 +17,9 @@ pipeline {
             steps {
                 script {
                     if (isUnix()) {
-                        sh "${MVN_CMD} clean validate compile test package verify -Pqatest"
+                        sh "${MVN_CMD} clean validate compile test verify"
                     } else {
-                        bat "${MVN_CMD} clean validate compile test package verify -Pqatest"
+                        bat "${MVN_CMD} clean validate compile test verify"
                     }
                 }
             }

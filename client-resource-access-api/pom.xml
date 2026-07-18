@@ -38,6 +38,8 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <gatling.version>3.15.1</gatling.version>
         <gatling-maven-plugin.version>4.21.7</gatling-maven-plugin.version>
+        <skipGatling>false</skipGatling>
+        <spring.profiles.active>qatest</spring.profiles.active>
     </properties>
 
     <dependencies>
@@ -228,6 +230,9 @@
                 <groupId>io.gatling</groupId>
                 <artifactId>gatling-maven-plugin</artifactId>
                 <version>${gatling-maven-plugin.version}</version>
+                <configuration>
+                    <skip>${skipGatling}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>gatling-tests</id>
@@ -251,8 +256,9 @@
                         <artifactId>spring-boot-maven-plugin</artifactId>
                         <configuration>
                             <jvmArguments>
-                                -Dspring.profiles.active=qatest
-                                <!-- -Dserver.port=8181  -->
+                                -Dspring.profiles.active=${spring.profiles.active}
+                                <!-- -Dspring.profiles.active=qatest -->
+                                <!-- -Dserver.port=8181 -->
                             </jvmArguments>
                         </configuration>
                         <executions>

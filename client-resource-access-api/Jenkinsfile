@@ -6,10 +6,15 @@ pipeline {
             steps {
                 dir('client-resource-access-api') {
                     script {
+                        env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
+
+                        echo "Branch: ${env.BRANCH_NAME}"
+                        echo "Skip Gatling: ${env.SKIP_GATLING}"
+
                         if (isUnix()) {
-                            sh 'mvn clean verify -Pqatest'
+                            sh "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
                         } else {
-                            bat 'mvn clean verify -Pqatest'
+                            bat "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
                         }
                     }
                 }
@@ -23,12 +28,15 @@ pipeline {
 
             junit(
                 allowEmptyResults: true,
-                testResults: 'target/surefire-reports/*.xml,target/failsafe-reports/*.xml'
+                testResults: '''
+                    **/target/surefire-reports/*.xml,
+                    **/target/failsafe-reports/*.xml
+                '''
             )
 
             archiveArtifacts(
                 allowEmptyArchive: true,
-                artifacts: 'target/gatling/**/*.html'
+                artifacts: '**/target/gatling/**'
             )
         }
 
