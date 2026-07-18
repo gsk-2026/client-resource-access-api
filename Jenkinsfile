@@ -1,4 +1,6 @@
 pipeline {
+    echo 'Java-api pipeline...'
+
     agent any
 
     tools {
