@@ -19,7 +19,7 @@ pipeline {
                     if (isUnix()) {
                         sh "${MVN_CMD} clean validate compile verify"
                     } else {
-                        bat "${MVN_CMD} clean validate compile test verify"
+                        bat "${MVN_CMD} clean validate compile verify"
                     }
                 }
             }
