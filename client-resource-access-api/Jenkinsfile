@@ -36,7 +36,7 @@ pipeline {
 
             archiveArtifacts(
                 allowEmptyArchive: true,
-                artifacts: '**/target/gatling/**/*.html'
+                artifacts: '**/target/gatling/**'
             )
         }
 
