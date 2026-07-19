@@ -28,16 +28,29 @@ pipeline {
 
             junit(
                 allowEmptyResults: true,
-                testResults: '''
-                    **/target/surefire-reports/*.xml,
-                    **/target/failsafe-reports/*.xml
-                '''
+                testResults: '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml'
             )
 
             archiveArtifacts(
                 allowEmptyArchive: true,
                 artifacts: '**/target/gatling/**'
             )
+
+            jacoco(
+                execPattern: '**/target/jacoco.exec',
+                classPattern: '**/target/classes',
+                sourcePattern: '**/src/main/java',
+                exclusionPattern: '**/model/**,**/dto/**'
+            )
+
+            publishHTML([
+                allowMissing: true,
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                reportDir: 'client-resource-access-api/target/site/jacoco',
+                reportFiles: 'index.html',
+                reportName: 'JaCoCo Coverage Report'
+            ])
         }
 
         success {

@@ -195,7 +195,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-            <!-- Jacoco -->
+            <!-- JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -215,6 +215,13 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <formats>
+                                <format>HTML</format>
+                                <format>XML</format>
+                                <format>CSV</format>
+                            </formats>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
