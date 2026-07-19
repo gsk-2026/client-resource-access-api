@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -55,6 +56,7 @@ public class Resource4ControllerAndServiceIT {
     // Mocks the database repository completely by replacing the Spring bean for ResourceRepository with Mockito mock
     private ResourceRepository resourceRepository;
 
+    private final String exceptionMsg = "Resource not found with id: {0}";
 
     @Test
     void checkActiveProfile() {
@@ -90,7 +92,6 @@ public class Resource4ControllerAndServiceIT {
     void getResourceById_exception() throws Exception {
         // Arrange:
         Long mockResourceId = 123456L;
-        String exceptionMsg = "Resource not found with id: " + mockResourceId;
         when(resourceRepository.findById(mockResourceId)).thenReturn(Optional.empty());
 
         // Act & Assert:
@@ -103,7 +104,7 @@ public class Resource4ControllerAndServiceIT {
                     // 2. Make sure it isn't null
                     assertNotNull(thrownException, "An exception should have been thrown!");
                     // 3. Match the exact error string you wrote in your orElseThrow clause!
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, String.valueOf(mockResourceId)), thrownException.getMessage());
                 });
     }
 
@@ -130,7 +131,6 @@ public class Resource4ControllerAndServiceIT {
     void deleteResourceById_exception() throws Exception {
         // Given:
         Long mockResourceId = 123456L;
-        String exceptionMsg = "Resource not found with id: " + mockResourceId;
         when(resourceRepository.findById(mockResourceId)).thenReturn(Optional.empty());
 
         // When & Then:
@@ -139,7 +139,7 @@ public class Resource4ControllerAndServiceIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, String.valueOf(mockResourceId)), thrownException.getMessage());
                 });
 
         verify(resourceRepository, never()).deleteById(mockResourceId);
@@ -163,7 +163,6 @@ public class Resource4ControllerAndServiceIT {
     void getResourceKeyById_exception() throws Exception {
         // Given:
         Long resourceId = 579L;
-        String exceptionMsg = "Resource not found with id: " + resourceId;
         when(resourceRepository.findKeyById(resourceId)).thenReturn(Optional.empty());
 
         // When & Then:
@@ -172,7 +171,7 @@ public class Resource4ControllerAndServiceIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, String.valueOf(resourceId)), thrownException.getMessage());
                 });
     }
 
@@ -193,7 +192,6 @@ public class Resource4ControllerAndServiceIT {
     void getResourceTypeById_exception() throws Exception {
         // Given:
         Long resourceId = 579L;
-        String exceptionMsg = "Resource not found with id: " + resourceId;
         when(resourceRepository.findKeyById(resourceId)).thenReturn(Optional.empty());
 
         // When & Then:
@@ -202,7 +200,7 @@ public class Resource4ControllerAndServiceIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, String.valueOf(resourceId)), thrownException.getMessage());
                 });
     }
 
@@ -224,7 +222,6 @@ public class Resource4ControllerAndServiceIT {
     void getResourceDescriptionById_exception() throws Exception {
         // Given:
         Long resourceId = 579L;
-        String exceptionMsg = "Resource not found with id: " + resourceId;
         when(resourceRepository.findDescriptionById(resourceId)).thenReturn(Optional.empty());
 
         // When & Then: Query parameters in MockMvc are passed as Strings
@@ -237,7 +234,7 @@ public class Resource4ControllerAndServiceIT {
                     // 2. Make sure it isn't null
                     assertNotNull(thrownException, "An exception should have been thrown!");
                     // 3. Match the exact error string you wrote in your orElseThrow clause!
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, String.valueOf(resourceId)), thrownException.getMessage());
                 });
     }
 
@@ -507,7 +504,6 @@ public class Resource4ControllerAndServiceIT {
     void patchRequest_exception() throws Exception {
         // Arrange:
         Long resourceId = 987654321L;
-        String exceptionMsg = "Resource not found with id: " + resourceId;
 
         ResourcePostRequest request = ResourcePostRequest.builder()
                 .key("KEY-" + resourceId)
@@ -527,7 +523,7 @@ public class Resource4ControllerAndServiceIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, String.valueOf(resourceId)), thrownException.getMessage());
                 });
     }
 
