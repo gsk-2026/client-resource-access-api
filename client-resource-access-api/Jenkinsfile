@@ -40,7 +40,14 @@ pipeline {
                 execPattern: '**/target/jacoco.exec',
                 classPattern: '**/target/classes',
                 sourcePattern: '**/src/main/java',
-                exclusionPattern: '**/model/**,**/dto/**'
+                exclusionPattern: '**/model/**, **/dto/**',
+
+                inimumLineCoverage: '80',
+                minimumClassCoverage: '80',
+                minimumMethodCoverage: '80',
+                minimumBranchCoverage: '70',
+                minimumComplexityCoverage: '70',
+                minimumInstructionCoverage: '80'
             )
 
             publishHTML([

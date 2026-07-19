@@ -4,13 +4,14 @@ import com.dreamtech.clientresourceaccessapi.dto.*;
 import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
 import com.dreamtech.clientresourceaccessapi.model.Resource;
 import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
-import groovy.util.ResourceException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,13 @@ class ResourceServiceImplTest {
 
     @InjectMocks
     private ResourceServiceImpl resourceService;
+
+    private Resource mockResource;
+
+    @BeforeEach
+    void setUp() {
+        mockResource = new Resource();
+    }
 
 
     @Test
@@ -281,9 +289,95 @@ class ResourceServiceImplTest {
 
 
 
+
     @Test
-    void searchResources() {
-        //TODO
+    void searchResources_AllParamsPresent_ShouldCallFindByKeyAndTypeAndDescription() {
+        when(resourceRepository.findByKeyAndTypeAndDescription("k", "t", "d"))
+                .thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources("k", "t", "d");
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByKeyAndTypeAndDescription("k", "t", "d");
+    }
+
+    @Test
+    void searchResources_KeyAndTypePresent_ShouldCallFindByKeyAndType() {
+        when(resourceRepository.findByKeyAndType("k", "t")).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources("k", "t", null);
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByKeyAndType("k", "t");
+    }
+
+    @Test
+    void searchResources_KeyAndDescPresent_ShouldCallFindByKeyAndDescription() {
+        when(resourceRepository.findByKeyAndDescription("k", "d")).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources("k", null, "d");
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByKeyAndDescription("k", "d");
+    }
+
+    @Test
+    void searchResources_TypeAndDescPresent_ShouldCallFindByTypeAndDescription() {
+        when(resourceRepository.findByTypeAndDescription("t", "d")).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources(null, "t", "d");
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByTypeAndDescription("t", "d");
+    }
+
+    @Test
+    void searchResources_OnlyKeyPresent_ShouldCallFindByKey() {
+        when(resourceRepository.findByKey("k")).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources("k", null, null);
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByKey("k");
+    }
+
+    @Test
+    void searchResources_OnlyTypePresent_ShouldCallFindByType() {
+        when(resourceRepository.findByType("t")).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources(null, "t", null);
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByType("t");
+    }
+
+    @Test
+    void searchResources_OnlyDescPresent_ShouldCallFindByDescription() {
+        when(resourceRepository.findByDescription("d")).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources(null, null, "d");
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findByDescription("d");
+    }
+
+    @Test
+    void searchResources_NoParamsPresent_ShouldCallFindAll() {
+        when(resourceRepository.findAll()).thenReturn(List.of(mockResource));
+
+        List<ResourceResponse> result = resourceService.searchResources(null, null, null);
+
+        assertThat(result).hasSize(1);
+        verify(resourceRepository, times(1)).findAll();
+    }
+
+    @Test
+    void searchResources_NoResultsFound_ShouldReturnEmptyList() {
+        when(resourceRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<ResourceResponse> result = resourceService.searchResources(null, null, null);
+
+        assertThat(result).isEmpty();
     }
 
 

@@ -26,6 +26,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
         import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -67,6 +68,8 @@ class ClientResourceAccessIT {
 
     @Autowired
     private WebApplicationContext context; // Loads the full app context
+
+    private final String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): ({0}, {1})";
 
     // The testing setup data
     private final String missingAccessCode = "Missing-Client-Access-Code";
@@ -168,8 +171,6 @@ class ClientResourceAccessIT {
     @Test
     void getByIds_exception() {
         // Given:
-        String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): (" + missingClientId + "," + missingResourceId + ")";
-
         // When & Then::
         mockMvc.perform(get("/api/v1/client-resource-access/client/{clientId}/resource/{resourceId}", missingClientId, missingResourceId)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -177,7 +178,7 @@ class ClientResourceAccessIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
                 });
 
         // Assert Database Layer w/o MOCK: Prove the real H2 database was checked and came up empty
@@ -210,8 +211,6 @@ class ClientResourceAccessIT {
     @Test
     void deleteByNames_exception() {
         // Given:
-        String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): (" + missingClientId + "," + missingResourceId + ")";
-
         // When & Then:
         mockMvc.perform(delete("/api/v1/client-resource-access/client/{clientId}/resource/{resourceId}", missingClientId, missingResourceId)
                         .with(csrf())
@@ -220,7 +219,7 @@ class ClientResourceAccessIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
                 });
     }
 
@@ -241,15 +240,13 @@ class ClientResourceAccessIT {
     @Test
     void getAccessCodeByIds_exception() {
         // Given:
-        String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): (" + missingClientId + "," + missingResourceId + ")";
-
         // When & Then:
         mockMvc.perform(get("/api/v1/client-resource-access/client/{clientId}/resource/{resourceId}/access-code", missingClientId, missingResourceId))
                 .andExpect(status().isNotFound())  //HTTP 404
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
                 });
     }
 
@@ -269,15 +266,13 @@ class ClientResourceAccessIT {
     @Test
     void getDescriptionByIds_exception() {
         // Given:
-        String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): (" + missingClientId + "," + missingResourceId + ")";
-
         // When & Then:
         mockMvc.perform(get("/api/v1/client-resource-access/client/{clientId}/resource/{resourceId}/description", missingClientId, missingResourceId))
                 .andExpect(status().isNotFound()) //HTTP 404
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(exceptionMsg, thrownException.getMessage());
+                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
                 });
     }
 

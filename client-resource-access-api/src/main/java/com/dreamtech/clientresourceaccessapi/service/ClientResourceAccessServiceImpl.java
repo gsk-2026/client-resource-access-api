@@ -16,11 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.text.MessageFormat.format;
+
 @Service
 @RequiredArgsConstructor // Automatically injects ResourceRepository via constructor
 public class ClientResourceAccessServiceImpl implements ClientResourceAccessService {
 
     private final ClientResourceAccessRepository repository;
+
+    private final String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): ({0}, {1})";
 
     @Override
     @Transactional
@@ -105,8 +109,10 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Override
     @Transactional
     public void deleteByIds(Long clientId, Long resourceId) {
-        repository.findByIds(clientId, resourceId)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("ClientResourceAccess not found with (clientId,resourceId): (" + clientId + "," + resourceId + ")"));
+        Optional<ClientResourceAccess> optional = repository.findByIds(clientId, resourceId);
+        if (! optional.isPresent()) {
+            throw (new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
+        }
 
         repository.deleteByIds(clientId, resourceId);
     }
@@ -115,7 +121,7 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Transactional(readOnly = true)
     public ClientResourceAccessResponse getByIds(Long clientId, Long resourceId) {
         ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("ClientResourceAccess not found with (clientId,resourceId): (" + clientId + "," + resourceId + ")"));
+                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
 
         return mapToResponse(cr);
     }
@@ -124,14 +130,14 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Transactional(readOnly = true)
     public String getAccessCodeByIds(Long clientId, Long resourceId)  {
         return repository.findAccessCodeByIds(clientId, resourceId)
-            .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("ClientResourceAccess not found with (clientId,resourceId): (" + clientId + "," + resourceId + ")"));
+            .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionByIds(Long clientId, Long resourceId) {
         return repository.findDescriptionByIds(clientId, resourceId)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("ClientResourceAccess not found with (clientId,resourceId): (" + clientId + "," + resourceId + ")"));
+                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
     }
 
 
