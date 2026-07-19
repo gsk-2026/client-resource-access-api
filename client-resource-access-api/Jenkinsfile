@@ -28,16 +28,43 @@ pipeline {
 
             junit(
                 allowEmptyResults: true,
+<<<<<<< HEAD
                 testResults: '''
                     **/target/surefire-reports/*.xml,
                     **/target/failsafe-reports/*.xml
                 '''
+=======
+                testResults: '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml'
+>>>>>>> feature/client
             )
 
             archiveArtifacts(
                 allowEmptyArchive: true,
                 artifacts: '**/target/gatling/**'
             )
+
+            jacoco(
+                execPattern: '**/target/jacoco.exec',
+                classPattern: '**/target/classes',
+                sourcePattern: '**/src/main/java',
+                exclusionPattern: '**/model/**, **/dto/**',
+
+                minimumLineCoverage: '80',
+                minimumClassCoverage: '80',
+                minimumMethodCoverage: '80',
+                minimumBranchCoverage: '70',
+                minimumComplexityCoverage: '70',
+                minimumInstructionCoverage: '80'
+            )
+
+            publishHTML([
+                allowMissing: true,
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                reportDir: 'client-resource-access-api/target/site/jacoco',
+                reportFiles: 'index.html',
+                reportName: 'JaCoCo Coverage Report'
+            ])
         }
 
         success {

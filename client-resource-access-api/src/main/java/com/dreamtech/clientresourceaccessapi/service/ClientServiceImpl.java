@@ -12,12 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.text.MessageFormat.format;
+
 @Service
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final String msg = "Client not found with id: {0}";
 
     public ClientServiceImpl(ClientRepository repository, PasswordEncoder passwordEncoder) {
         this.clientRepository = repository;
@@ -87,7 +91,7 @@ public class ClientServiceImpl implements ClientService {
     @Transactional
     public ClientResponse updateClient(Long id, ClientPatchRequest request) {
         Client existingClient = clientRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("Client not found with id: " + id));
+                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
 
         if (request.key() != null) {
             existingClient.setKey(request.key());
@@ -116,8 +120,10 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public void deleteClientById(Long id) {
-        clientRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("Client not found with id: " + id));
+        Optional<Client> optional = clientRepository.findById(id);
+        if (! optional.isPresent()) {
+            throw (new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+        }
 
         clientRepository.deleteById(id);
     }
@@ -126,7 +132,7 @@ public class ClientServiceImpl implements ClientService {
     @Transactional(readOnly = true)
     public ClientResponse getClientById(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("Client not found with id: " + id));
+                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
 
         return mapToResponse(client);
     }
@@ -135,14 +141,14 @@ public class ClientServiceImpl implements ClientService {
     @Transactional(readOnly = true)
     public String getKeyById(Long id){
         return clientRepository.findKeyById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("Client not found with id: " + id));
+                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionById(Long id) {
         return clientRepository.findDescriptionById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("Client not found with id: " + id));
+                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
     }
 
 
