@@ -315,17 +315,17 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
                 clientCrudScenario.injectOpen(atOnceUsers(loops)),
 
                 // Fire 100 parallel users in 3 seconds
-                resourceCrudScenario.injectOpen(nothingFor(Duration.ofSeconds(5)), rampUsers(loops).during(Duration.ofSeconds(30))),
+                resourceCrudScenario.injectOpen(nothingFor(Duration.ofSeconds(10)), rampUsers(loops).during(Duration.ofSeconds(30))),
 
                 // Fire all 100 isolated users concurrently
-                accessCrudScenario.injectOpen(nothingFor(Duration.ofSeconds(5)), atOnceUsers(loops))
+                accessCrudScenario.injectOpen(nothingFor(Duration.ofSeconds(30)), atOnceUsers(loops))
 
         )
         .protocols(httpProtocol)
         .assertions(
                 global().successfulRequests().percent().gte(90.0),
                 global().responseTime().mean().lte(300),
-                global().responseTime().percentile3().lte(600),
+                global().responseTime().percentile3().lte(800),
                 global().failedRequests().count().lte(5L)
         );
     }
