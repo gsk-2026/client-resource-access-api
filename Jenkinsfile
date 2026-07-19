@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     if (isUnix()) {
-                        sh "${MVN_CMD} clean validate compile test package verify"
+                        sh "${MVN_CMD} clean validate compile test verify"
                     } else {
                         bat "${MVN_CMD} clean validate compile test package verify"
                     }
