@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("oracle-test") // Loads application-e2etest.yml
+@ActiveProfiles("oracle-test") // Loads application-oracle-test.yml
 class ClientResourceAccessApiOracleE2E {
     /*  End-To-End Test:
         The real raw DIT/SIT/UAT Oracle Database is applied for the E2E Testing.
