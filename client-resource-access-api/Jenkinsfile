@@ -15,11 +15,13 @@ pipeline {
 
         stage('Build') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh "mvn clean compile"
-                    } else {
-                        bat "mvn clean compile"
+                dir('client-resource-access-api') {
+                    script {
+                        if (isUnix()) {
+                            sh "mvn -B clean compile"
+                        } else {
+                            bat "mvn -B clean compile"
+                        }
                     }
                 }
             }
@@ -27,11 +29,13 @@ pipeline {
 
         stage('Unit Test') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh "mvn test"
-                    } else {
-                        bat "mvn test"
+                dir('client-resource-access-api') {
+                    script {
+                        if (isUnix()) {
+                            sh "mvn -B test"
+                        } else {
+                            bat "mvn -B test"
+                        }
                     }
                 }
             }
@@ -39,11 +43,13 @@ pipeline {
 
         stage('Package') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh "mvn package -DskipTests"
-                    } else {
-                        bat "mvn package -DskipTests"
+                dir('client-resource-access-api') {
+                    script {
+                        if (isUnix()) {
+                            sh "mvn -B package -DskipTests"
+                        } else {
+                            bat "mvn -B package -DskipTests"
+                        }
                     }
                 }
             }
@@ -51,16 +57,18 @@ pipeline {
 
         stage('Verify Build') {
             steps {
-                script {
-                    env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
+                dir('client-resource-access-api') {
+                    script {
+                        env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
 
-                    echo "Branch: ${env.BRANCH_NAME}"
-                    echo "Skip Gatling: ${env.SKIP_GATLING}"
+                        echo "Branch: ${env.BRANCH_NAME}"
+                        echo "Skip Gatling: ${env.SKIP_GATLING}"
 
-                    if (isUnix()) {
-                        sh "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
-                    } else {
-                        bat "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                        if (isUnix()) {
+                            sh "mvn -B verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                        } else {
+                            bat "mvn -B verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                        }
                     }
                 }
             }
