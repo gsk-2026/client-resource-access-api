@@ -105,10 +105,12 @@ pipeline {
 
         stage('List Docker Images') {
             steps {
-                if (isUnix()) {
-                    sh "docker images"
-                } else {
-                    bat "docker images"
+                script {
+                    if (isUnix()) {
+                        sh "docker images"
+                    } else {
+                        bat "docker images"
+                    }
                 }
             }
         }
