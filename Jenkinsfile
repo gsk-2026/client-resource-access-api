@@ -1,7 +1,60 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven_3_9_16'
+        jdk 'JDK_26'
+    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('client-resource-access-api') {
+                    script {
+                        if (isUnix()) {
+                            sh "mvn -B clean compile"
+                        } else {
+                            bat "mvn -B clean compile"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                dir('client-resource-access-api') {
+                    script {
+                        if (isUnix()) {
+                            sh "mvn -B test"
+                        } else {
+                            bat "mvn -B test"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                dir('client-resource-access-api') {
+                    script {
+                        if (isUnix()) {
+                            sh "mvn -B package -DskipTests"
+                        } else {
+                            bat "mvn -B package -DskipTests"
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Verify Build') {
             steps {
                 dir('client-resource-access-api') {
@@ -17,6 +70,37 @@ pipeline {
                             sh "mvn -B verify -Pqatest -DskipGatling=${env.SKIP_GATLING} -DskipE2E=${env.SKIP_E2E}"
                         } else {
                             bat "mvn -B verify -Pqatest -DskipGatling=${env.SKIP_GATLING} -DskipE2E=${env.SKIP_E2E}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts(
+                    artifacts: '**/target/client-resource-access-api-*.jar',
+                    fingerprint: true
+                )
+            }
+        }
+
+        stage('Docker Version') {
+            steps {
+                dir('client-resource-access-api') {
+                    bat 'docker --version'
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir('client-resource-access-api') {
+                    script {
+                         if (isUnix()) {
+                            sh 'docker build -t client-resource-access-api:latest .'
+                         } else {
+                            bat 'docker build -t client-resource-access-api:latest .'
                         }
                     }
                 }
