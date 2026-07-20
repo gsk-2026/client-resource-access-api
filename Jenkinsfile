@@ -114,6 +114,38 @@ pipeline {
                 }
             }
         }
+
+        stage('Docker Smoke Test') {
+            steps {
+                script {
+
+                    bat '''
+                    docker rm -f client-resource-access-api-test || exit 0
+
+                    docker run -d ^
+                      --name client-resource-access-api-test ^
+                      -p 8181:8181 ^
+                      client-resource-access-api:3
+                    '''
+
+                    echo "Waiting for Spring Boot startup..."
+
+                    sleep(time: 30, unit: 'SECONDS')
+
+                    bat '''
+                    curl http://localhost:8181/actuator/health
+                    '''
+                }
+            }
+
+            post {
+                always {
+                    bat '''
+                    docker rm -f client-resource-access-api-test || exit 0
+                    '''
+                }
+            }
+        }
     }
 
     post {
