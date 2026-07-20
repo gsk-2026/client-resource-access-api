@@ -15,45 +15,53 @@ pipeline {
 
         stage('Build') {
             steps {
-                if (isUnix()) {
-                    sh "mvn clean compile"
-                } else {
-                    bat "mvn clean compile"
+                script {
+                    if (isUnix()) {
+                        sh "mvn clean compile"
+                    } else {
+                        bat "mvn clean compile"
+                    }
                 }
             }
         }
 
         stage('Unit Test') {
             steps {
-                if (isUnix()) {
-                    sh "mvn test"
-                } else {
-                    bat "mvn test"
+                script {
+                    if (isUnix()) {
+                        sh "mvn test"
+                    } else {
+                        bat "mvn test"
+                    }
                 }
             }
         }
 
         stage('Package') {
             steps {
-                if (isUnix()) {
-                    sh "mvn package -DskipTests"
-                } else {
-                    bat "mvn package -DskipTests"
+                script {
+                    if (isUnix()) {
+                        sh "mvn package -DskipTests"
+                    } else {
+                        bat "mvn package -DskipTests"
+                    }
                 }
             }
         }
 
         stage('Verify Build') {
             steps {
-                env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
+                script {
+                    env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
 
-                echo "Branch: ${env.BRANCH_NAME}"
-                echo "Skip Gatling: ${env.SKIP_GATLING}"
+                    echo "Branch: ${env.BRANCH_NAME}"
+                    echo "Skip Gatling: ${env.SKIP_GATLING}"
 
-                if (isUnix()) {
-                    sh "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
-                } else {
-                    bat "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                    if (isUnix()) {
+                        sh "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                    } else {
+                        bat "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                    }
                 }
             }
         }
