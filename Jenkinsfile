@@ -1,28 +1,71 @@
 pipeline {
-    echo 'Java-api pipeline...'
-
     agent any
 
-    tools {
-        maven 'Maven_3_9_16'
-        jdk 'JDK_26'
-    }
-
-    environment {
-        MVN_CMD = "${isUnix() ? 'mvn' : 'mvn.cmd'}"
-    }
-
     stages {
-        stage('Build & Test') {
+        stage('Verify Build') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh "${MVN_CMD} clean validate compile test package verify"
-                    } else {
-                        bat "${MVN_CMD} clean validate compile test package verify"
+                dir('client-resource-access-api') {
+                    script {
+                        env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
+
+                        echo "Branch: ${env.BRANCH_NAME}"
+                        echo "Skip Gatling: ${env.SKIP_GATLING}"
+
+                        if (isUnix()) {
+                            sh "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                        } else {
+                            bat "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                        }
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Publishing test reports...'
+
+            junit(
+                allowEmptyResults: true,
+                testResults: '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml'
+            )
+
+            archiveArtifacts(
+                allowEmptyArchive: true,
+                artifacts: '**/target/gatling/**'
+            )
+
+            jacoco(
+                execPattern: '**/target/jacoco.exec',
+                classPattern: '**/target/classes',
+                sourcePattern: '**/src/main/java',
+                exclusionPattern: '**/model/**, **/dto/**',
+
+                minimumLineCoverage: '80',
+                minimumClassCoverage: '80',
+                minimumMethodCoverage: '80',
+                minimumBranchCoverage: '70',
+                minimumComplexityCoverage: '70',
+                minimumInstructionCoverage: '80'
+            )
+
+            publishHTML([
+                allowMissing: true,
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                reportDir: 'client-resource-access-api/target/site/jacoco',
+                reportFiles: 'index.html',
+                reportName: 'JaCoCo Coverage Report'
+            ])
+        }
+
+        success {
+            echo 'BUILD SUCCESS'
+        }
+
+        failure {
+            echo 'BUILD FAILED'
         }
     }
 }

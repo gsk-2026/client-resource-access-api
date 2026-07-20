@@ -1,23 +1,69 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven_3_9_16'
+        jdk 'JDK_26'
+    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                if (isUnix()) {
+                    sh "mvn clean compile"
+                } else {
+                    bat "mvn clean compile"
+                }
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                if (isUnix()) {
+                    sh "mvn test"
+                } else {
+                    bat "mvn test"
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                if (isUnix()) {
+                    sh "mvn package -DskipTests"
+                } else {
+                    bat "mvn package -DskipTests"
+                }
+            }
+        }
+
         stage('Verify Build') {
             steps {
-                dir('client-resource-access-api') {
-                    script {
-                        env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
+                env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
 
-                        echo "Branch: ${env.BRANCH_NAME}"
-                        echo "Skip Gatling: ${env.SKIP_GATLING}"
+                echo "Branch: ${env.BRANCH_NAME}"
+                echo "Skip Gatling: ${env.SKIP_GATLING}"
 
-                        if (isUnix()) {
-                            sh "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
-                        } else {
-                            bat "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
-                        }
-                    }
+                if (isUnix()) {
+                    sh "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                } else {
+                    bat "mvn verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
                 }
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts(
+                    artifacts: '**/target/client-resource-access-api-*.jar',
+                    fingerprint: true
+                )
             }
         }
     }
