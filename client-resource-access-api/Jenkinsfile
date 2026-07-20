@@ -84,6 +84,20 @@ pipeline {
                 )
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('client-resource-access-api') {
+                    script {
+                         if (isUnix()) {
+                            sh 'docker build -t client-resource-access-api:latest .'
+                         } else {
+                            bat 'docker build -t client-resource-access-api:latest .'
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
