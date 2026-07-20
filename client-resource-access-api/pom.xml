@@ -39,6 +39,7 @@
         <gatling.version>3.15.1</gatling.version>
         <gatling-maven-plugin.version>4.21.7</gatling-maven-plugin.version>
         <skipGatling>false</skipGatling>
+        <skipE2E>false</skipE2E>
         <spring.profiles.active>qatest</spring.profiles.active>
     </properties>
 
@@ -229,29 +230,22 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.6</version>
+                <configuration>
+                    <skipITs>${skipE2E}</skipITs>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>it</id>
-                        <goals><goal>integration-test</goal></goals>
+                        <id>integration-tests</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
                         <configuration>
                             <includes>
                                 <include>**/*IT.java</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>e2e</id>
-                        <goals><goal>integration-test</goal></goals>
-                        <configuration>
-                            <includes>
                                 <include>**/*E2E.java</include>
                             </includes>
                         </configuration>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals><goal>verify</goal></goals>
                     </execution>
                 </executions>
             </plugin>

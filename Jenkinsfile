@@ -7,14 +7,16 @@ pipeline {
                 dir('client-resource-access-api') {
                     script {
                         env.SKIP_GATLING = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
+                        env.SKIP_E2E = (env.BRANCH_NAME == 'main') ? 'false' : 'true'
 
                         echo "Branch: ${env.BRANCH_NAME}"
                         echo "Skip Gatling: ${env.SKIP_GATLING}"
+                        echo "Skip E2E: ${env.SKIP_E2E}"
 
                         if (isUnix()) {
-                            sh "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                            sh "mvn -B verify -Pqatest -DskipGatling=${env.SKIP_GATLING} -DskipE2E=${env.SKIP_E2E}"
                         } else {
-                            bat "mvn clean verify -Pqatest -DskipGatling=${env.SKIP_GATLING}"
+                            bat "mvn -B verify -Pqatest -DskipGatling=${env.SKIP_GATLING} -DskipE2E=${env.SKIP_E2E}"
                         }
                     }
                 }
