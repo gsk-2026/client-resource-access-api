@@ -85,24 +85,30 @@ pipeline {
             }
         }
 
-        stage('Docker Version') {
-            steps {
-                dir('client-resource-access-api') {
-                    bat 'docker --version'
-                }
-            }
-        }
-        
         stage('Build Docker Image') {
             steps {
                 dir('client-resource-access-api') {
                     script {
-                         if (isUnix()) {
-                            sh 'docker build -t client-resource-access-api:latest .'
-                         } else {
-                            bat 'docker build -t client-resource-access-api:latest .'
+                        def imageName = "client-resource-access-api:${env.BUILD_NUMBER}"
+
+                        if (isUnix()) {
+                            sh "docker build -t ${imageName} ."
+                        } else {
+                            bat "docker build -t ${imageName} ."
                         }
+
+                        echo "Built Docker image: ${imageName}"
                     }
+                }
+            }
+        }
+
+        stage('List Docker Images') {
+            steps {
+                if (isUnix()) {
+                    sh "docker images"
+                } else {
+                    bat "docker images"
                 }
             }
         }
