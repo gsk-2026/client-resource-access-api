@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        APP_PORT = '8181'
+    }
+
     tools {
         maven 'Maven_3_9_16'
         jdk 'JDK_26'
@@ -118,7 +122,6 @@ pipeline {
         stage('Docker Smoke Test') {
             steps {
                 script {
-
                     def imageTag = "client-resource-access-api:${BUILD_NUMBER}"
 
                     if (isUnix()) {
@@ -127,7 +130,7 @@ pipeline {
 
                             docker run -d \
                               --name client-resource-access-api-test \
-                              -p 8181:8181 \
+                              -p ${APP_PORT}:${APP_PORT} \
                               ${imageTag}
                         """
                     } else {
@@ -136,7 +139,7 @@ pipeline {
 
                             docker run -d ^
                               --name client-resource-access-api-test ^
-                              -p 8181:8181 ^
+                              -p %APP_PORT%:%APP_PORT% ^
                               ${imageTag}
                         """
                     }
@@ -146,9 +149,9 @@ pipeline {
                     sleep(time: 30, unit: 'SECONDS')
 
                     if (isUnix()) {
-                        sh "curl http://localhost:8181/actuator/health"
+                        sh "curl http://localhost:${APP_PORT}/actuator/health"
                     } else {
-                        bat "curl http://localhost:8181/actuator/health"
+                        bat "curl http://localhost:%APP_PORT%/actuator/health"
                     }
                 }
             }
