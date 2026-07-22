@@ -17,7 +17,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-@ActiveProfiles("h2mem-test")
+@ActiveProfiles({"h2mem-test", "test"})
 class ClientResourceAccessRepositoryTest {
     /*  Pure Unit Test.
         Unit test for ClientResourceAccessRepository using the H2 in-memory database.
@@ -36,7 +36,7 @@ class ClientResourceAccessRepositoryTest {
     @Test
     void checkActiveProfile() {
         String[] env = environment.getActiveProfiles();
-        Assertions.assertThat(Arrays.toString(env)).isEqualTo("[h2mem-test]");
+        Assertions.assertThat(Arrays.toString(env)).isEqualTo("[h2mem-test, test]");
     }
 
 

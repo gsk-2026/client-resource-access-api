@@ -7,8 +7,9 @@ spring:
     driver-class-name: ${TEST_DB_DRIVER:oracle.jdbc.OracleDriver}
   jpa:
     database-platform: ${TEST_DB_PLATFORM:org.hibernate.dialect.OracleDialect}
+    show-sql: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+      format_sql: true
 
 
