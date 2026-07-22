@@ -5,17 +5,21 @@ import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRu
 import com.dreamtech.clientresourceaccessapi.service.ClientService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.ArgumentMatchers.any;
 
 @WebMvcTest(ClientController.class)
+@ActiveProfiles("test") // Activates application-test.yml
 class ClientControllerTest {
     /*  Pure Unit Test for ClientController.
         This is Pure Unit Test for ClientController using Autowired and MockitoBean.
@@ -39,6 +44,8 @@ class ClientControllerTest {
     @MockitoBean
     private ClientService clientService; // Mocks the business logic dependency
 
+    @Autowired
+    private Environment environment;
 
     @Test
     void getClientById_when_client_has_all_attributes() throws Exception {
@@ -64,6 +71,12 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$.id").value(clientId))
                 .andExpect(jsonPath("$.key").value(clientKey))
                 .andExpect(jsonPath("$.description").value(clientDescription));
+    }
+
+    @Test
+    void testActiveProfile() {
+        String[] env = environment.getActiveProfiles();
+        assertThat(Arrays.toString(env)).isEqualTo("[test]");
     }
 
     @Test
