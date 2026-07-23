@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest // Boots up ONLY the JPA components using the H2 in-memory database specified by the test YAML
-@ActiveProfiles("h2mem-test") // Loads application-h2mem-test.yml
+@ActiveProfiles({"h2mem-test", "test"}) // Loads application-h2mem-test.yml
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // Forces Spring to use your YAML parameters
 class ResourceRepositoryTest {
     /*  Pure Unit Test.
@@ -93,7 +93,7 @@ class ResourceRepositoryTest {
         // This will print the active profiles (e.g., [test]) helping you match the YAML suffix
         //System.out.println("Active profile: " + Arrays.toString(environment.getActiveProfiles()));
         String[] env = environment.getActiveProfiles();
-        assertThat(Arrays.toString(env)).isEqualTo("[h2mem-test]");
+        assertThat(Arrays.toString(env)).isEqualTo("[h2mem-test, test]");
     }
 
 

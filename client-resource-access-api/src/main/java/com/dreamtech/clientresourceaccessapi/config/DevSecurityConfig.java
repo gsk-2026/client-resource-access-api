@@ -17,11 +17,13 @@ public class DevSecurityConfig {
     @Bean
     public SecurityFilterChain devFilterChain(HttpSecurity http) throws Exception {
         http
-                // Allows Postman to send POST requests
+                // Disabling Spring Security's CSRF protection for local developing
                 .csrf(csrf -> csrf.disable())
 
-                //Disabling Spring Security's CSRF protection is safe here - This will be applied to DEV local only.
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                // Bypass Security checking for local developing
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .formLogin(form -> form.disable())     // Completely disables the login page UI
+                .httpBasic(basic -> basic.disable());   // Disables the basic browser auth popup too
 
         return http.build();
     }

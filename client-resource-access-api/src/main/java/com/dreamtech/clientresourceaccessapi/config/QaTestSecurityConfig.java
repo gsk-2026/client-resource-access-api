@@ -16,11 +16,13 @@ public class QaTestSecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Allows Postman to send POST requests
+                // Disabling Spring Security's CSRF protection for local testing
                 .csrf(csrf -> csrf.disable())
 
-                //Disabling Spring Security's CSRF protection is safe here - This will be applied to QA local only.
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                // Bypass Security checking for local testing
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable());
 
         return http.build();
     }

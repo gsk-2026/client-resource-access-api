@@ -6,14 +6,18 @@ import com.dreamtech.clientresourceaccessapi.service.ResourceService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -25,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 
 @WebMvcTest(ResourceController.class)
+@ActiveProfiles("test") // Activates application-test.yml
 class ResourceControllerTest {
     /*  Pure unit Test for ResourceControllerTest
         This is Pure Unit Test for ResourceControllerTest using Autowired and MockitoBean.
@@ -35,6 +40,16 @@ class ResourceControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockitoBean ResourceService resourceService;
+
+    @Autowired
+    private Environment environment;
+
+
+    @Test
+    void testActiveProfile() {
+        String[] env = environment.getActiveProfiles();
+        assertThat(Arrays.toString(env)).isEqualTo("[test]");
+    }
 
 
     @Test

@@ -17,12 +17,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
+import org.springframework.test.context.ActiveProfiles;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 
+@SpringBootTest
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test") // Activates application-test.yml
 class ClientResourceAccessServiceImplTest {
     /*  Pure Unit Test.
         Unit Test for ClientResourceAccessServiceImpl using Mock & InjectMocks.   */
@@ -33,6 +40,15 @@ class ClientResourceAccessServiceImplTest {
     @InjectMocks
     private ClientResourceAccessServiceImpl service;
 
+    @Autowired
+    private Environment environment;
+
+
+    @Test
+    void testActiveProfile() {
+        String[] env = environment.getActiveProfiles();
+        assertThat(Arrays.toString(env)).isEqualTo("[test]");
+    }
 
     @Test
     void createClientResourceAccess_success() {

@@ -7,6 +7,7 @@ import org.testcontainers.oracle.OracleContainer;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -94,10 +95,13 @@ public class ClientResourceAccessApiE2ELoadRunner {
                 };
             }
 
+            File projectDir = new File( System.getProperty("user.dir"), "client-resource-access-api" );
+
             // Set up the process builder to stream real-time logs to your IDE window
             ProcessBuilder processBuilder = new ProcessBuilder(mavenCommand);
             processBuilder.redirectErrorStream(true);
-            processBuilder.directory(new java.io.File(System.getProperty("user.dir")));
+            // processBuilder.directory(new java.io.File(System.getProperty("user.dir")));
+            processBuilder.directory(projectDir);
             Process process = processBuilder.start();
 
             // Stream Gatling console results in real-time
@@ -139,13 +143,13 @@ public class ClientResourceAccessApiE2ELoadRunner {
                 .getResourceAsStream("application.properties")) {
 
             if (input == null) {
-                return  "8080"; // Default fallback if file is missing
+                return  "8181"; // Default fallback if file is missing
             }
             prop.load(input);
-            return prop.getProperty("server.port", "8080");
+            return prop.getProperty("server.port", "8181");
 
         } catch (Exception ex) {
-            return "8080"; // Default fallback on error
+            return "8181"; // Default fallback on error
         }
     }
 }
