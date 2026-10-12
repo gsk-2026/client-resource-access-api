@@ -1,7 +1,6 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
 import com.dreamtech.clientresourceaccessapi.model.Client;
 import com.dreamtech.clientresourceaccessapi.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
@@ -14,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -89,7 +90,7 @@ class ClientServiceImplTest {
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.createClient(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(HttpStatus409AlreadyExistsException.class)
                 .hasMessageContaining(exceptionMsg);
 
         // Verify that save was never called because it threw an exception early
@@ -305,14 +306,14 @@ class ClientServiceImplTest {
         Long clientId = 987654321L;
         String exceptionMsg = "Client not found with id: " + clientId;
 
-        //doThrow(new ClientResourceAccessApiRuntimeException(exceptionMsg)).when(clientRepository).findById(clientId);
+        //doThrow(new HttpStatus404NotFoundException(exceptionMsg)).when(clientRepository).findById(clientId);
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
         ClientPatchRequest request = ClientPatchRequest.builder().key("Client-Key").build();
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.updateClient(clientId, request))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
+                .isInstanceOf(HttpStatus404NotFoundException.class)
                 .hasMessageContaining(exceptionMsg);
 
         // Verify
@@ -353,20 +354,20 @@ class ClientServiceImplTest {
     void updateSecret_exception() {
         // GIVEN
         Long clientId = 789123L;
-        String exceptionMsg = "Client not found for id: " + clientId;
+        String msg404 = "Client not found with id: " + clientId;
 
         ClientPatchSecretRequest request = ClientPatchSecretRequest.builder()
                 .currentSecret("My-Current-Top-Secret-"+clientId)
                 .newSecret("My-New-Top-Secret-"+clientId)
                 .build();
 
-        //doThrow(new ClientResourceAccessApiRuntimeException(exceptionMsg)).when(clientRepository).findById(clientId);
+        //doThrow(new HttpStatus404NotFoundException(exceptionMsg)).when(clientRepository).findById(clientId);
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.updateSecret(clientId, request))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
-                .hasMessageContaining(exceptionMsg);
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
 
         // Verify
         verify(clientRepository, never()).save(any(Client.class));
@@ -395,12 +396,12 @@ class ClientServiceImplTest {
         Long clientId = 97531L;
         String exceptionMsg = "Client not found with id: " + clientId;
 
-        //doThrow(new ClientResourceAccessApiRuntimeException(exceptionMsg)).when(clientRepository).findById(clientId);
+        //doThrow(new HttpStatus404NotFoundException(exceptionMsg)).when(clientRepository).findById(clientId);
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.deleteClientById(clientId))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
+                .isInstanceOf(HttpStatus404NotFoundException.class)
                 .hasMessageContaining(exceptionMsg);
 
         // Verify
@@ -434,12 +435,12 @@ class ClientServiceImplTest {
         Long clientId = 13579L;
         String exceptionMsg = "Client not found with id: " + clientId;
 
-        //doThrow(new ClientResourceAccessApiRuntimeException(exceptionMsg)).when(clientRepository).findById(clientId);
+        //doThrow(new HttpStatus404NotFoundException(exceptionMsg)).when(clientRepository).findById(clientId);
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.getClientById(clientId))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
+                .isInstanceOf(HttpStatus404NotFoundException.class)
                 .hasMessageContaining(exceptionMsg);
     }
 
@@ -468,7 +469,7 @@ class ClientServiceImplTest {
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.getKeyById(clientId))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
+                .isInstanceOf(HttpStatus404NotFoundException.class)
                 .hasMessageContaining(exceptionMsg);
     }
 
@@ -497,7 +498,7 @@ class ClientServiceImplTest {
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.getDescriptionById(clientId))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
+                .isInstanceOf(HttpStatus404NotFoundException.class)
                 .hasMessageContaining(exceptionMsg);
     }
 

@@ -8,7 +8,8 @@ import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPatchReques
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPostRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessResponse;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
 import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import org.junit.jupiter.api.Test;
@@ -87,7 +88,7 @@ class ClientResourceAccessServiceImplTest {
 
     @Test
     void createClientResourceAccess_duplicate() {
-        String  exceptionMsg = "ClientResourceAccess already exists with (clientId,resourceId): (1002,2002)";
+        String  msg409 = "ClientResourceAccess already exists with (clientId,resourceId): (1002,2002)";
         ClientResourceAccess existing =  mockedEntity(
                         1002L,
                         2002L,
@@ -105,8 +106,8 @@ class ClientResourceAccessServiceImplTest {
                         .build();
 
         assertThatThrownBy(() -> service.createClientResourceAccess(request))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
-                .hasMessageContaining(exceptionMsg);
+                .isInstanceOf(HttpStatus409AlreadyExistsException.class)
+                .hasMessageContaining(msg409);
 
         then(repository)
                 .should(never())
@@ -290,7 +291,7 @@ class ClientResourceAccessServiceImplTest {
                         1009L,
                         2009L,
                         request))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
     }
 
 
@@ -323,7 +324,7 @@ class ClientResourceAccessServiceImplTest {
 
         assertThatThrownBy(() ->
                 service.deleteByIds(1011L,2011L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
 
         then(repository)
                 .should(never())
@@ -360,7 +361,7 @@ class ClientResourceAccessServiceImplTest {
         given(repository.findByIds(1013L,2013L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getByIds(1013L,2013L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
 
         then(repository)
                 .should()
@@ -384,7 +385,7 @@ class ClientResourceAccessServiceImplTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getAccessCodeByIds(1015L,2015L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
     }
 
 
@@ -404,7 +405,7 @@ class ClientResourceAccessServiceImplTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getDescriptionByIds(1017L,2017L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
     }
 
 

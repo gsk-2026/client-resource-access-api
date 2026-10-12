@@ -1,7 +1,6 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
 import com.dreamtech.clientresourceaccessapi.model.Resource;
 import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,7 +103,7 @@ class ResourceServiceImplTest {
                         .description("New - DESCRIPTION")
                             .build();
 
-        assertThrows(IllegalArgumentException.class, () -> resourceService.createResource(request));
+        assertThrows(HttpStatus409AlreadyExistsException.class, () -> resourceService.createResource(request));
 
         verify(resourceRepository, never()).save(any());
     }
@@ -132,7 +133,7 @@ class ResourceServiceImplTest {
     void getResourceById_notFound() {
         when(resourceRepository.findById(987L)).thenReturn(Optional.empty());
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.getResourceById(987L));
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getResourceById(987L));
     }
 
 
@@ -418,7 +419,7 @@ class ResourceServiceImplTest {
     void deleteResourceById_notFound() {
         when(resourceRepository.findById(333L)).thenReturn(Optional.empty());
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.deleteResourceById(333L));
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.deleteResourceById(333L));
 
         verify(resourceRepository, never()).deleteById(anyLong());
     }
@@ -435,7 +436,7 @@ class ResourceServiceImplTest {
     void getTypeById_notFound() {
         when(resourceRepository.findKeyById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.getKeyById(1L));
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getKeyById(1L));
     }
 
     @Test
@@ -449,7 +450,7 @@ class ResourceServiceImplTest {
     void getDescriptionById_notFound() {
         when(resourceRepository.findDescriptionById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.getDescriptionById(1L));
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getDescriptionById(1L));
     }
 
     

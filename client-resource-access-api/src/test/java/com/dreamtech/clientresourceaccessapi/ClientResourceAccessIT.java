@@ -29,11 +29,11 @@ import java.util.Optional;
 import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-        import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-        import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-        import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -69,7 +69,7 @@ class ClientResourceAccessIT {
     @Autowired
     private WebApplicationContext context; // Loads the full app context
 
-    private final String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): ({0}, {1})";
+    private final String msg404 = "ClientResourceAccess not found with (clientId,resourceId): ({0},{1})";
 
     // The testing setup data
     private final String missingAccessCode = "Missing-Client-Access-Code";
@@ -178,7 +178,7 @@ class ClientResourceAccessIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
+                    assertEquals(format(msg404, missingClientId, missingResourceId), thrownException.getMessage());
                 });
 
         // Assert Database Layer w/o MOCK: Prove the real H2 database was checked and came up empty
@@ -219,7 +219,7 @@ class ClientResourceAccessIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
+                    assertEquals(format(msg404, missingClientId, missingResourceId), thrownException.getMessage());
                 });
     }
 
@@ -232,7 +232,7 @@ class ClientResourceAccessIT {
         // When & Then:
         mockMvc.perform(get("/api/v1/client-resource-access/client/{clientId}/resource/{resourceId}/access-code", existingClientId, existingResourceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(existingAccessCode));
+                .andExpect(jsonPath("$.text").value(existingAccessCode));
     }
 
     @SneakyThrows
@@ -246,7 +246,7 @@ class ClientResourceAccessIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
+                    assertEquals(format(msg404, missingClientId, missingResourceId), thrownException.getMessage());
                 });
     }
 
@@ -258,7 +258,7 @@ class ClientResourceAccessIT {
         // When & Then:
         mockMvc.perform(get("/api/v1/client-resource-access/client/{clientId}/resource/{resourceId}/description", existingClientId, existingResourceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(existingDescription));
+                .andExpect(jsonPath("$.text").value(existingDescription));
     }
 
     @SneakyThrows
@@ -272,7 +272,7 @@ class ClientResourceAccessIT {
                 .andExpect(result -> {
                     Exception thrownException = result.getResolvedException();
                     assertNotNull(thrownException, "An exception should have been thrown!");
-                    assertEquals(format(exceptionMsg, missingClientId, missingResourceId), thrownException.getMessage());
+                    assertEquals(format(msg404, missingClientId, missingResourceId), thrownException.getMessage());
                 });
     }
 
@@ -412,7 +412,7 @@ class ClientResourceAccessIT {
     @Test
     void postRequest_exception() {  // post the existing record
         // Given:
-        String exceptionMsg = "ClientResourceAccess already exists with (clientId,resourceId): (" +  existingClientId+ "," + existingResourceId +")";
+        String msg409 = "ClientResourceAccess already exists with (clientId,resourceId): (" +  existingClientId+ "," + existingResourceId +")";
 
         ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
                 .clientId(existingClientId)
@@ -428,11 +428,11 @@ class ClientResourceAccessIT {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)        // Set Content-Type: application/json
                         .content(jsonPayload))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isConflict())
                 .andExpect(result -> {
                     Exception resolvedException = result.getResolvedException();
                     assertNotNull(resolvedException, "An exception should have been intercepted!");
-                    assertTrue(resolvedException.getMessage().contains(exceptionMsg));
+                    assertTrue(resolvedException.getMessage().contains(msg409));
                 });
     }
 

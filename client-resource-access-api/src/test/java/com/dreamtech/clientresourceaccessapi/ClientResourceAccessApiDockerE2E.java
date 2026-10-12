@@ -382,7 +382,7 @@ public class ClientResourceAccessApiDockerE2E {
                     .get("/api/v1/client/{id}/key")
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body(is(client.getKey()));
+                    .body("text", equalTo(client.getKey()));
         }
 
         @Test
@@ -397,7 +397,7 @@ public class ClientResourceAccessApiDockerE2E {
                     .get("/api/v1/client/{id}/description")
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body(is(client.getDescription()));
+                    .body("text", equalTo(client.getDescription()));
         }
 
         @Test
@@ -430,7 +430,7 @@ public class ClientResourceAccessApiDockerE2E {
                     .get("/api/v1/resource/{id}/key")
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body(is(resource.getKey()));
+                    .body("text", equalTo(resource.getKey()));
         }
 
         @Test
@@ -445,7 +445,7 @@ public class ClientResourceAccessApiDockerE2E {
                     .get("/api/v1/resource/{id}/type")
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body(is(resource.getType()));
+                    .body("text", equalTo(resource.getType()));
         }
 
         @Test
@@ -460,7 +460,7 @@ public class ClientResourceAccessApiDockerE2E {
                     .get("/api/v1/resource/{id}/description")
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body(is(resource.getDescription()));
+                    .body("text", equalTo(resource.getDescription()));
         }
     }
 

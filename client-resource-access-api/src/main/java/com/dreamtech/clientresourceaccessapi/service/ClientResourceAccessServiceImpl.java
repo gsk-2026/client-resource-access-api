@@ -4,7 +4,8 @@ import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPatchReques
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPostRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessResponse;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
 import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 
@@ -24,15 +25,14 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
 
     private final ClientResourceAccessRepository repository;
 
-    private final String exceptionMsg = "ClientResourceAccess not found with (clientId,resourceId): ({0}, {1})";
+    private final String msg404 = "ClientResourceAccess not found with (clientId,resourceId): ({0},{1})";
 
     @Override
     @Transactional
     public ClientResourceAccessResponse createClientResourceAccess(ClientResourceAccessPostRequest request) {
-        String exceptionMsg = "ClientResourceAccess already exists with (clientId,resourceId): (" +  request.clientId() + "," + request.resourceId() +")";
-
         if ( repository.findByIds(request.clientId(), request.resourceId()).isPresent() ) {
-                throw new ClientResourceAccessApiRuntimeException(exceptionMsg);
+            String msg409 = "ClientResourceAccess already exists with (clientId,resourceId): ({0},{1})";
+            throw new HttpStatus409AlreadyExistsException(format(msg409, String.valueOf(request.clientId()), String.valueOf(request.resourceId())));
         }
 
         ClientResourceAccess cr = ClientResourceAccess.builder()
@@ -91,9 +91,8 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Override
     @Transactional
     public ClientResourceAccessResponse updateClientResourceAccess(Long clientId, Long resourceId, ClientResourceAccessPatchRequest request) {
-        String exceptionMsg = "ClientResourceAccess already exists with (clientId,resourceId): (" +  clientId + "," + resourceId +")";
         ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(exceptionMsg));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
 
         if (request.accessCode() != null) {
             cr.setAccessCode(request.accessCode());
@@ -111,7 +110,7 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     public void deleteByIds(Long clientId, Long resourceId) {
         Optional<ClientResourceAccess> optional = repository.findByIds(clientId, resourceId);
         if (! optional.isPresent()) {
-            throw (new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
+            throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
         }
 
         repository.deleteByIds(clientId, resourceId);
@@ -121,7 +120,7 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Transactional(readOnly = true)
     public ClientResourceAccessResponse getByIds(Long clientId, Long resourceId) {
         ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
 
         return mapToResponse(cr);
     }
@@ -130,14 +129,14 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Transactional(readOnly = true)
     public String getAccessCodeByIds(Long clientId, Long resourceId)  {
         return repository.findAccessCodeByIds(clientId, resourceId)
-            .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
+            .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionByIds(Long clientId, Long resourceId) {
         return repository.findDescriptionByIds(clientId, resourceId)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(exceptionMsg, clientId, resourceId)));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
     }
 
 

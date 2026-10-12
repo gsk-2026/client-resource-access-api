@@ -4,9 +4,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
-public class ClientResourceAccessApiRuntimeException extends RuntimeException {
+public class HttpStatus404NotFoundException extends RuntimeException {
 
-    public ClientResourceAccessApiRuntimeException(String message) {
+    public HttpStatus404NotFoundException(String message) {
         super(message);
     }
 

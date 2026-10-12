@@ -156,7 +156,7 @@ public class Resource4ControllerAndServiceIT {
         // Act & Assert:
         mockMvc.perform(get("/api/v1/resource/{id}/key", mockResourceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(mockedKey));
+                .andExpect(jsonPath("$.text").value(mockedKey));
     }
 
     @Test
@@ -185,7 +185,7 @@ public class Resource4ControllerAndServiceIT {
         // Act & Assert:
         mockMvc.perform(get("/api/v1/resource/{id}/type", mockResourceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(mockedType));
+                .andExpect(jsonPath("$.text").value(mockedType));
     }
 
     @Test
@@ -215,7 +215,7 @@ public class Resource4ControllerAndServiceIT {
         // Act & Assert:
         mockMvc.perform(get("/api/v1/resource/{id}/description", mockResourceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(mockedDescription));
+                .andExpect(jsonPath("$.text").value(mockedDescription));
     }
 
     @Test
