@@ -8,9 +8,14 @@ import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPatchReques
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPostRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessResponse;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.model.Client;
 import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
+import com.dreamtech.clientresourceaccessapi.model.Resource;
+import com.dreamtech.clientresourceaccessapi.repository.ClientRepository;
 import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
+import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -29,11 +34,16 @@ import java.util.Optional;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test") // Activates application-test.yml
+@ActiveProfiles("h2mem-test") // Activates application-h2mem-test.yml
 class ClientResourceAccessServiceImplTest {
     /*  Pure Unit Test.
         Unit Test for ClientResourceAccessServiceImpl using Mock & InjectMocks.   */
 
+
+    @Mock
+    private ClientRepository clientRepository;
+    @Mock
+    private ResourceRepository resourceRepository;
     @Mock
     private ClientResourceAccessRepository repository;
 
@@ -47,7 +57,7 @@ class ClientResourceAccessServiceImplTest {
     @Test
     void testActiveProfile() {
         String[] env = environment.getActiveProfiles();
-        assertThat(Arrays.toString(env)).isEqualTo("[test]");
+        assertThat(Arrays.toString(env)).isEqualTo("[h2mem-test]");
     }
 
     @Test
@@ -59,7 +69,6 @@ class ClientResourceAccessServiceImplTest {
                 .accessCode("ACCESS-1001-2001")
                 .description("Description-1001-2001")
                 .build();
-
         ClientResourceAccess entity = mockedEntity(
                         1101L,
                         2201L,
@@ -67,6 +76,8 @@ class ClientResourceAccessServiceImplTest {
                         "Description-1101-2201");
 
         given(repository.findByIds(1001L,2001L)).willReturn(Optional.empty());
+        given(clientRepository.findById(1001L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2001L)).willReturn(Optional.of(new Resource()));
 
         given(repository.save(any(ClientResourceAccess.class))).willReturn(entity);
 
@@ -86,16 +97,12 @@ class ClientResourceAccessServiceImplTest {
     }
 
     @Test
-    void createClientResourceAccess_duplicate() {
-        String  exceptionMsg = "ClientResourceAccess already exists with (clientId,resourceId): (1002,2002)";
-        ClientResourceAccess existing =  mockedEntity(
-                        1002L,
-                        2002L,
-                        "ACCESS-002-Existing",
-                        "Description 002-Existing");
+    void createClientResourceAccess_exception_duplicate() {
+        String  msg409 = "ClientResourceAccess already exists with (clientId,resourceId): (1002,2002)";
 
-        given(repository.findByIds(1002L,2002L))
-                .willReturn(Optional.of(existing));
+        given(clientRepository.findById(1002L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2002L)).willReturn(Optional.of(new Resource()));
+        given(repository.findByIds(1002L,2002L)).willReturn(Optional.of(new ClientResourceAccess()));
 
         ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
                         .clientId(1002L)
@@ -105,8 +112,97 @@ class ClientResourceAccessServiceImplTest {
                         .build();
 
         assertThatThrownBy(() -> service.createClientResourceAccess(request))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class)
-                .hasMessageContaining(exceptionMsg);
+                .isInstanceOf(HttpStatus409AlreadyExistsException.class)
+                .hasMessageContaining(msg409);
+
+        then(repository)
+                .should(never())
+                .save(any());
+    }
+
+    @Test
+    void createClientResourceAccess_exception_invalid_client() {
+        String  msg404 = "Client not found with id: 1102";
+
+        given(clientRepository.findById(1102L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
+                .clientId(1102L)
+                .resourceId(2102L)
+                .accessCode("ACCESS-102")
+                .description("Description 102")
+                .build();
+
+        assertThatThrownBy(() -> service.createClientResourceAccess(request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+
+        then(repository)
+                .should(never())
+                .save(any());
+    }
+
+    @Test
+    void createClientResourceAccess_exception_invalid_resource() {
+        String  msg404 = "Resource not found with id: 2102";
+
+        given(clientRepository.findById(1102L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2102L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
+                .clientId(1102L)
+                .resourceId(2102L)
+                .accessCode("ACCESS-102")
+                .description("Description 102")
+                .build();
+
+        assertThatThrownBy(() -> service.createClientResourceAccess(request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+
+        then(repository)
+                .should(never())
+                .save(any());
+    }
+
+    @Test
+    void createClientResourceAccess_non_existing_client() {
+        String  msg404 = "Client not found with id: 1101";
+        given(clientRepository.findById(1101L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
+                .clientId(1101L)
+                .resourceId(2201L)
+                .accessCode("ACCESS-201-New")
+                .description("Description 201 New")
+                .build();
+
+        assertThatThrownBy(() -> service.createClientResourceAccess(request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+
+        then(repository)
+                .should(never())
+                .save(any());
+    }
+
+
+    @Test
+    void createClientResourceAccess_non_existing_resource() {
+        String  msg404 = "Resource not found with id: 2202";
+        given(clientRepository.findById(1102L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2202L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
+                .clientId(1102L)
+                .resourceId(2202L)
+                .accessCode("ACCESS-202-New")
+                .description("Description 202 New")
+                .build();
+
+        assertThatThrownBy(() -> service.createClientResourceAccess(request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
 
         then(repository)
                 .should(never())
@@ -205,6 +301,8 @@ class ClientResourceAccessServiceImplTest {
                         "ACCESS-OLD",
                         "DESCRIPTIONOld");
 
+        given(clientRepository.findById(1006L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2006L)).willReturn(Optional.of(new Resource()));
         given(repository.findByIds(1006L,2006L)).willReturn(Optional.of(existing));
 
         given(repository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
@@ -232,6 +330,8 @@ class ClientResourceAccessServiceImplTest {
 
     @Test
     void replaceClientResourceAccess_newEntity() {
+        given(clientRepository.findById(1007L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2007L)).willReturn(Optional.of(new Resource()));
         given(repository.findByIds(1007L,2007L)).willReturn(Optional.empty());
 
         given(repository.save(any())).willAnswer(i -> i.getArgument(0));
@@ -254,6 +354,43 @@ class ClientResourceAccessServiceImplTest {
                 .save(any());
     }
 
+    @Test
+    void replaceClientResourceAccess_invalid_client() {
+        long client_id = 1007L;
+        long resource_id = 2007L;
+        String  msg404 = "Client not found with id: 1007";
+
+        given(clientRepository.findById(1007L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPutRequest request = ClientResourceAccessPutRequest.builder()
+                .accessCode("NEW")
+                .description("Created")
+                .build();
+
+        assertThatThrownBy(() ->service.replaceClientResourceAccess(client_id, resource_id, request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+    }
+
+    @Test
+    void replaceClientResourceAccess_invalid_resource() {
+        long client_id = 1007L;
+        long resource_id = 2007L;
+        String  msg404 = "Resource not found with id: 2007";
+
+        given(clientRepository.findById(1007L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2007L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPutRequest request = ClientResourceAccessPutRequest.builder()
+                .accessCode("NEW")
+                .description("Created")
+                .build();
+
+        assertThatThrownBy(() ->service.replaceClientResourceAccess(client_id, resource_id, request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+    }
+
 
     @Test
     void updateClientResourceAccess_accessCodeOnly() {
@@ -263,6 +400,8 @@ class ClientResourceAccessServiceImplTest {
                         "OLD",
                         null);
 
+        given(clientRepository.findById(1008L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2008L)).willReturn(Optional.of(new Resource()));
         given(repository.findByIds(1008L,2008L)).willReturn(Optional.of(entity));
 
         given(repository.save(any()))
@@ -281,6 +420,8 @@ class ClientResourceAccessServiceImplTest {
 
     @Test
     void updateClientResourceAccess_notFound() {
+        String msg404 = "ClientResourceAccess not found with (clientId,resourceId): (1009,2009)";
+
         given(repository.findByIds(1009L,2009L)).willReturn(Optional.empty());
 
         ClientResourceAccessPatchRequest request = ClientResourceAccessPatchRequest.builder()
@@ -290,9 +431,47 @@ class ClientResourceAccessServiceImplTest {
                         1009L,
                         2009L,
                         request))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
     }
 
+    @Test
+    void updateClientResourceAccess_client_notFound() {
+        String  msg404 = "Client not found with id: 1109";
+
+        given(repository.findByIds(1109L,2209L)).willReturn(Optional.of(new ClientResourceAccess()));
+        given(clientRepository.findById(1109L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPatchRequest request = ClientResourceAccessPatchRequest.builder()
+                .accessCode("NEW").description("Desc").build();
+
+        assertThatThrownBy(() -> service.updateClientResourceAccess(
+                1109L,
+                2209L,
+                request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+    }
+
+
+    @Test
+    void updateClientResourceAccess_resource_notFound() {
+        String  msg404 = "Resource not found with id: 2222";
+
+        given(repository.findByIds(1111L, 2222L)).willReturn(Optional.of(new ClientResourceAccess()));
+        given(clientRepository.findById(1111L)).willReturn(Optional.of(new Client()));
+        given(resourceRepository.findById(2222L)).willReturn(Optional.empty());
+
+        ClientResourceAccessPatchRequest request = ClientResourceAccessPatchRequest.builder()
+                .accessCode("NEW").description("Desc").build();
+
+        assertThatThrownBy(() -> service.updateClientResourceAccess(
+                1111L,
+                2222L,
+                request))
+                .isInstanceOf(HttpStatus404NotFoundException.class)
+                .hasMessageContaining(msg404);
+    }
 
     @Test
     void deleteByIds_success() {
@@ -323,7 +502,7 @@ class ClientResourceAccessServiceImplTest {
 
         assertThatThrownBy(() ->
                 service.deleteByIds(1011L,2011L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
 
         then(repository)
                 .should(never())
@@ -360,7 +539,7 @@ class ClientResourceAccessServiceImplTest {
         given(repository.findByIds(1013L,2013L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getByIds(1013L,2013L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+                .isInstanceOf(HttpStatus404NotFoundException.class);
 
         then(repository)
                 .should()
@@ -370,41 +549,80 @@ class ClientResourceAccessServiceImplTest {
 
     @Test
     void getAccessCodeByIds_success() {
-        given(repository.findAccessCodeByIds(1014L,2014L))
-                .willReturn(Optional.of("AccessCode"));
+        long client_id = 1014L;
+        long resource_id = 2014L;
+        String mockedAccessCode = "AccessCode-014";
+        ClientResourceAccess cra = new ClientResourceAccess();
+        cra.setClientId(client_id);
+        cra.setResourceId(resource_id);
+        cra.setAccessCode(mockedAccessCode);
 
-        String code = service.getAccessCodeByIds(1014L,2014L);
+        //given(repository.findAccessCodeByIds(client_id, resource_id)).willReturn(Optional.of("AccessCode"));
+        given(repository.findByIds(client_id, resource_id)).willReturn(Optional.of(cra));
 
-        assertThat(code).isEqualTo("AccessCode");
+        String code = service.getAccessCodeByIds(client_id, resource_id);
+
+        assertThat(code).isEqualTo(mockedAccessCode);
     }
 
     @Test
     void getAccessCodeByIds_notFound() {
-        given(repository.findAccessCodeByIds(1015L,2015L))
-                .willReturn(Optional.empty());
+        long client_id = 1015L;
+        long resource_id = 2015L;
 
-        assertThatThrownBy(() -> service.getAccessCodeByIds(1015L,2015L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+        //given(repository.findAccessCodeByIds(client_id, resource_id)).willReturn(Optional.empty());
+        given(repository.findByIds(client_id, resource_id)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getAccessCodeByIds(client_id, resource_id))
+                .isInstanceOf(HttpStatus404NotFoundException.class);
     }
 
 
     @Test
     void getDescriptionByIds_success() {
-        given(repository.findDescriptionByIds(1016L,2016L))
-                .willReturn(Optional.of("DESCRIPTION-016"));
+        long client_id = 1016L;
+        long resource_id = 2016L;
+        String mockedDescription = "DESCRIPTION-016";
+        ClientResourceAccess cra = new ClientResourceAccess();
+        cra.setClientId(client_id);
+        cra.setResourceId(resource_id);
+        cra.setDescription(mockedDescription);
 
-        String code = service.getDescriptionByIds(1016L,2016L);
+        //given(repository.findDescriptionByIds(client_id, resource_id)).willReturn(Optional.of(mockedDescription));
+        given(repository.findByIds(client_id, resource_id)).willReturn(Optional.of(cra));
 
-        assertThat(code).isEqualTo("DESCRIPTION-016");
+        String description = service.getDescriptionByIds(client_id, resource_id);
+
+        assertThat(description).isEqualTo(mockedDescription);
     }
 
     @Test
-    void getDescriptionByIds_notFound() {
-        given(repository.findDescriptionByIds(1017L,2017L))
-                .willReturn(Optional.empty());
+    void getDescriptionByIds_success_null_description() {
+        long client_id = 1016L;
+        long resource_id = 2016L;
+        ClientResourceAccess cra = new ClientResourceAccess();
+        cra.setClientId(client_id);
+        cra.setResourceId(resource_id);
 
-        assertThatThrownBy(() -> service.getDescriptionByIds(1017L,2017L))
-                .isInstanceOf(ClientResourceAccessApiRuntimeException.class);
+        //given(repository.findDescriptionByIds(client_id, resource_id)).willReturn(Optional.of(mockedDescription));
+        given(repository.findByIds(client_id, resource_id)).willReturn(Optional.of(cra));
+
+        String description = service.getDescriptionByIds(client_id, resource_id);
+
+        assertThat(description).isNull();
+    }
+
+
+    @Test
+    void getDescriptionByIds_notFound() {
+        long client_id = 1017L;
+        long resource_id = 2017L;
+
+        //given(repository.findDescriptionByIds(client_id, resource_id)).willReturn(Optional.empty());
+        given(repository.findByIds(client_id, resource_id)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getDescriptionByIds(client_id, resource_id))
+                .isInstanceOf(HttpStatus404NotFoundException.class);
     }
 
 
