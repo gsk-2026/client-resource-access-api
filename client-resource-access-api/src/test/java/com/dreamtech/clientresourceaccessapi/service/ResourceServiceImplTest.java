@@ -1,7 +1,10 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus422UnprocessableException;
+import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.model.Resource;
+import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,10 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
 import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,6 +37,9 @@ class ResourceServiceImplTest {
 
     @Mock
     private ResourceRepository resourceRepository;
+
+    @Mock
+    private ClientResourceAccessRepository clientResourceAccessRepository;
 
     @InjectMocks
     private ResourceServiceImpl resourceService;
@@ -430,6 +433,7 @@ class ResourceServiceImplTest {
                         "357-Type",
                         "357 description");
 
+        when(clientResourceAccessRepository.findByResourceId(357L)).thenReturn(new ArrayList<>());
         when(resourceRepository.findById(357L)).thenReturn(Optional.of(resource));
 
         resourceService.deleteResourceById(357L);
@@ -439,10 +443,21 @@ class ResourceServiceImplTest {
 
     @Test
     void deleteResourceById_notFound() {
+        when(clientResourceAccessRepository.findByResourceId(333L)).thenReturn(new ArrayList<>());
         when(resourceRepository.findById(333L)).thenReturn(Optional.empty());
 
         assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.deleteResourceById(333L));
 
+        verify(resourceRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void deleteResourceById_unprocessible() {
+        when(clientResourceAccessRepository.findByResourceId(3690L)).thenReturn(List.of(new ClientResourceAccess()));
+
+        assertThrows(HttpStatus422UnprocessableException.class, () -> resourceService.deleteResourceById(3690L));
+
+        verify(resourceRepository, never()).findById(anyLong());
         verify(resourceRepository, never()).deleteById(anyLong());
     }
 

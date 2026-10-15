@@ -1,8 +1,11 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus422UnprocessableException;
 import com.dreamtech.clientresourceaccessapi.model.Client;
+import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.repository.ClientRepository;
+import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +23,16 @@ public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
 
+    private final ClientResourceAccessRepository clientResourceAccessRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     private final String msg404 = "Client not found with id: {0}";
     private final String msg409 = "Client already exists with key: {0}";
 
-    public ClientServiceImpl(ClientRepository repository, PasswordEncoder passwordEncoder) {
+    public ClientServiceImpl(ClientRepository repository, ClientResourceAccessRepository craRepository, PasswordEncoder passwordEncoder) {
         this.clientRepository = repository;
+        this.clientResourceAccessRepository = craRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -140,6 +146,12 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public void deleteClientById(Long id) {
+        List<ClientResourceAccess> reponseList  = clientResourceAccessRepository.findByClientId(id);
+        if (reponseList != null && !reponseList.isEmpty()) {
+            String msg422 = "Client cannot be deleted because ClientResourceAccess has records with clientId: {0}";
+            throw (new HttpStatus422UnprocessableException(format(msg422, String.valueOf(id))));
+        }
+
         Optional<Client> optional = clientRepository.findById(id);
         if (optional.isEmpty()) {
             throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));

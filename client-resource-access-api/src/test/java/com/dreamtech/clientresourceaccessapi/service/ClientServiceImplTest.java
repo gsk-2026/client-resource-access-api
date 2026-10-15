@@ -1,8 +1,11 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus422UnprocessableException;
 import com.dreamtech.clientresourceaccessapi.model.Client;
+import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.repository.ClientRepository;
+import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,10 +41,13 @@ class ClientServiceImplTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private ClientRepository clientRepository; // Mock the dependency used by the implementation
+    private ClientRepository clientRepository;
+
+    @Mock
+    private ClientResourceAccessRepository clientResourceAccessRepository;
 
     @InjectMocks
-    private ClientServiceImpl clientService; // Declare the exact implementation class here
+    private ClientServiceImpl clientService;
 
     @Autowired
     private Environment environment;
@@ -405,6 +411,7 @@ class ClientServiceImplTest {
         // GIVEN
         Long clientId = 97531L;
 
+        when(clientResourceAccessRepository.findByClientId((clientId))).thenReturn(new ArrayList<>());
         when(clientRepository.findById((clientId))).thenReturn(Optional.of(new Client()));
         doNothing().when(clientRepository).deleteById(clientId);
 
@@ -412,6 +419,7 @@ class ClientServiceImplTest {
         clientService.deleteClientById(clientId);
 
         // Verify that delete was called exactly once with the correct client object
+        verify(clientResourceAccessRepository, times(1)).findByClientId(clientId);
         verify(clientRepository, times(1)).findById(clientId);
         verify(clientRepository, times(1)).deleteById(clientId);
     }
@@ -431,6 +439,24 @@ class ClientServiceImplTest {
                 .hasMessageContaining(exceptionMsg);
 
         // Verify
+        verify(clientRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void deleteClientById_Exception_ClientResourceAccess_Has_Existing_Record() {
+        // GIVEN
+        Long clientId = 97531L;
+        String exceptionMsg = "Client cannot be deleted because ClientResourceAccess has records with clientId: " + clientId;
+
+        when(clientResourceAccessRepository.findByClientId(clientId)).thenReturn(List.of(new ClientResourceAccess()));
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> clientService.deleteClientById(clientId))
+                .isInstanceOf(HttpStatus422UnprocessableException.class)
+                .hasMessageContaining(exceptionMsg);
+
+        // Verify
+        verify(clientRepository, never()).findById(anyLong());
         verify(clientRepository, never()).deleteById(anyLong());
     }
 

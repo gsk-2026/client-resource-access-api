@@ -501,7 +501,41 @@ class ClientResourceAccessApiOracleE2E {
         assertThat(msg).contains("409 Conflict");
     }
 
+    @Test
+    void deleteClient_unprocessable() {
+        // Arrange: setUp;
+        String testKey_1 = "deleteClient_unprocessable-Client-Key-A";
+        String testDescription_1 = "deleteClient_unprocessable-Client-Description-A";
+        Client client_1 = createClient(testKey_1, testDescription_1);
+        currentTestClientId = client_1.getId();
 
+        String testKey = "deleteClient_unprocessable-Resource-Key-A";
+        String testType = "deleteClient_unprocessable-Resource-Type-A";
+        String testDescription = "deleteClient_unprocessable-Resource-Description-A";
+        Resource resource = createResource(testKey, testType, testDescription);
+        currentTestResourceId = resource.getId();
+
+        String testAccessCode = "deleteClient_unprocessable-Access-Code-A";
+        testDescription = "deleteClient_unprocessable-ClientResourceAccess-Description-A";
+        ClientResourceAccess access = createClientResourceAccess(
+                currentTestClientId, currentTestResourceId, testAccessCode, testDescription
+        );
+        currentTestClientResourceAccess_ClientId = access.getClientId();
+        currentTestClientResourceAccess_ResourceId = access.getResourceId();
+
+        String msg;
+        try {
+            String url = baseUrl + "/api/v1/client/" + currentTestClientResourceAccess_ClientId;
+            ResponseEntity<ClientResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.DELETE, HttpEntity.EMPTY, ClientResponse.class
+            );
+            msg = response.getStatusCode().toString();
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("422");
+        assertThat(msg).contains("Unprocessable Content");
+    }
 
 
     @Test
@@ -897,7 +931,42 @@ class ClientResourceAccessApiOracleE2E {
         org.junit.jupiter.api.Assertions.assertTrue(responseBody.contains("\"error\":\"Not Found\""));
     }
 
+    @Test
+    void deleteResource_unprocessable() {
+        // Arrange: setUp;
+        String testKey_1 = "deleteResource_unprocessable-Client-Key-A";
+        String testDescription_1 = "deleteResource_unprocessable-Client-Description-A";
+        Client client_1 = createClient(testKey_1, testDescription_1);
+        currentTestClientId = client_1.getId();
 
+        String testKey = "deleteResource_unprocessable-Resource-Key-A";
+        String testType = "deleteResource_unprocessable-Resource-Type-A";
+        String testDescription = "deleteResource_unprocessable-Resource-Description-A";
+        Resource resource = createResource(testKey, testType, testDescription);
+        currentTestResourceId = resource.getId();
+
+        String testAccessCode = "deleteResource_unprocessable-Access-Code-A";
+        testDescription = "deleteClient_unprocessable-ClientResourceAccess-Description-A";
+        ClientResourceAccess access = createClientResourceAccess(
+                currentTestClientId, currentTestResourceId, testAccessCode, testDescription
+        );
+        currentTestClientResourceAccess_ClientId = access.getClientId();
+        currentTestClientResourceAccess_ResourceId = access.getResourceId();
+
+        String msg;
+        try {
+            String url = baseUrl + "/api/v1/resource/" + currentTestClientResourceAccess_ResourceId;
+            ResponseEntity<ClientResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.DELETE, HttpEntity.EMPTY, ClientResponse.class
+            );
+            msg = response.getStatusCode().toString();
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("422");
+        assertThat(msg).contains("Unprocessable Content");
+    }
+    
 
     @Test
     void getClientResourceAccessByIds_exist() {

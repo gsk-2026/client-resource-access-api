@@ -25,4 +25,7 @@ public interface ClientResourceAccessService {
 
     String getDescriptionByIds(Long clientId, Long resourceId);
 
+    List<ClientResourceAccessResponse> getByClientId(Long clientId);
+
+    List<ClientResourceAccessResponse> getByResourceId(Long resourceId);
 }
