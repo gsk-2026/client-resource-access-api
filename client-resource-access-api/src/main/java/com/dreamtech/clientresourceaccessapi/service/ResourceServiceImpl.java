@@ -4,12 +4,13 @@ import com.dreamtech.clientresourceaccessapi.dto.ResourcePatchRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ResourcePostRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ResourcePutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ResourceResponse;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
 import com.dreamtech.clientresourceaccessapi.model.Resource;
 import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,9 @@ public class ResourceServiceImpl implements ResourceService {
     @Autowired // Avoid this pattern
     private ResourceRepository resourceRepository;
 
-    private final String msg = "Resource not found with id: {0}";
+    private final String msg404 = "Resource not found with id: {0}";
+
+    private final String msg409 = "Resource already exists with key: {0}";
 
     @Override
     @Transactional
@@ -32,7 +35,7 @@ public class ResourceServiceImpl implements ResourceService {
         boolean hasMyKey = resourceList.stream().anyMatch(resource -> request.key().equals(resource.getKey()));
 
         if ((! resourceList.isEmpty()) && hasMyKey) {
-            throw new IllegalArgumentException("Resource already exists with key: " + request.key());
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
         }
 
         // Map DTO to Entity
@@ -52,7 +55,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Transactional(readOnly = true)
     public ResourceResponse getResourceById(Long id) {
         Resource resource = resourceRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
 
         return mapToResponse(resource);
     }
@@ -61,7 +64,16 @@ public class ResourceServiceImpl implements ResourceService {
     @Transactional
     public ResourceResponse updateResource(Long id, ResourcePatchRequest request) {
         Resource existingResource = resourceRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+
+        List<Resource> resourceList = resourceRepository.findByKey(request.key());
+        boolean hasMyKey = resourceList.stream().anyMatch(
+                resource -> resource.getKey().equals(request.key()) &&
+                        !resource.getId().equals(id)
+        );
+        if ((! resourceList.isEmpty()) && hasMyKey) {
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
+        }
 
         if (request.key() != null) {
             existingResource.setKey(request.key());
@@ -80,6 +92,15 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional
     public ResourceResponse replaceResource(Long id, ResourcePutRequest request) {
+        List<Resource> resourceList = resourceRepository.findByKey(request.key());
+        boolean hasMyKey = resourceList.stream().anyMatch(
+                resource -> resource.getKey().equals(request.key()) &&
+                        !resource.getId().equals(id)
+        );
+        if ((! resourceList.isEmpty()) && hasMyKey) {
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
+        }
+
         Optional<Resource> optionalResource = resourceRepository.findById(id);
         Resource resource = optionalResource.orElseGet(Resource::new);
 
@@ -136,8 +157,8 @@ public class ResourceServiceImpl implements ResourceService {
     @Transactional
     public void deleteResourceById(Long id) {
         Optional<Resource> optional = resourceRepository.findById(id);
-        if (! optional.isPresent()) {
-            throw (new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+        if (optional.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
         }
 
         resourceRepository.deleteById(id);
@@ -146,22 +167,37 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(readOnly = true)
     public String getKeyById(Long id){
+        /*
         return resourceRepository.findKeyById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        */
+        Resource resource = resourceRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return resource.getKey();
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getTypeById(Long id){
+        /*
         return resourceRepository.findTypeById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        */
+        Resource resource = resourceRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return resource.getType();
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionById(Long id){
+        /*
         return resourceRepository.findDescriptionById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+         */
+        Resource resource = resourceRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return resource.getDescription();
     }
 
 
