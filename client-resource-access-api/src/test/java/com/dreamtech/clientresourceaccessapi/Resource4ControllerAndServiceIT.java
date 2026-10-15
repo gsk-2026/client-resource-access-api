@@ -151,7 +151,12 @@ public class Resource4ControllerAndServiceIT {
         // Arrange:
         Long mockResourceId = 123L;
         String mockedKey = "Resource-Key";
-        when(resourceRepository.findKeyById(mockResourceId)).thenReturn(Optional.of(mockedKey));
+        Resource mockResource = new Resource();
+        mockResource.setId(mockResourceId);
+        mockResource.setKey(mockedKey);
+
+        //when(resourceRepository.findKeyById(mockResourceId)).thenReturn(Optional.of(mockedKey));
+        when(resourceRepository.findById(mockResourceId)).thenReturn(Optional.of(mockResource));
 
         // Act & Assert:
         mockMvc.perform(get("/api/v1/resource/{id}/key", mockResourceId))
@@ -180,7 +185,12 @@ public class Resource4ControllerAndServiceIT {
         // Arrange:
         Long mockResourceId = 123L;
         String mockedType = "Resource-Type";
-        when(resourceRepository.findTypeById(mockResourceId)).thenReturn(Optional.of(mockedType));
+        Resource mockResource = new Resource();
+        mockResource.setId(mockResourceId);
+        mockResource.setType(mockedType);
+
+        //when(resourceRepository.findTypeById(mockResourceId)).thenReturn(Optional.of(mockedType));
+        when(resourceRepository.findById(mockResourceId)).thenReturn(Optional.of(mockResource));
 
         // Act & Assert:
         mockMvc.perform(get("/api/v1/resource/{id}/type", mockResourceId))
@@ -210,7 +220,12 @@ public class Resource4ControllerAndServiceIT {
         // Arrange:
         Long mockResourceId = 123L;
         String mockedDescription = "Resource-Description";
-        when(resourceRepository.findDescriptionById(mockResourceId)).thenReturn(Optional.of(mockedDescription));
+        Resource mockedResource = new Resource();
+        mockedResource.setId(mockResourceId);
+        mockedResource.setDescription(mockedDescription);
+
+        //when(resourceRepository.findDescriptionById(mockResourceId)).thenReturn(Optional.of(mockedDescription));
+        when(resourceRepository.findById(mockResourceId)).thenReturn(Optional.of(mockedResource));
 
         // Act & Assert:
         mockMvc.perform(get("/api/v1/resource/{id}/description", mockResourceId))

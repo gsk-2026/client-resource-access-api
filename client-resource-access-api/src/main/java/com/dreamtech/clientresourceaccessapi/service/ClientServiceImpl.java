@@ -23,6 +23,7 @@ public class ClientServiceImpl implements ClientService {
     private final PasswordEncoder passwordEncoder;
 
     private final String msg404 = "Client not found with id: {0}";
+    private final String msg409 = "Client already exists with key: {0}";
 
     public ClientServiceImpl(ClientRepository repository, PasswordEncoder passwordEncoder) {
         this.clientRepository = repository;
@@ -36,7 +37,6 @@ public class ClientServiceImpl implements ClientService {
         boolean hasMyKey = clientList.stream().anyMatch(client -> request.key().equals(client.getKey()));
 
         if (!clientList.isEmpty() && hasMyKey) {
-            String msg409 = "Client already exists with key: {0}";
             throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
         }
 
@@ -77,6 +77,15 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public ClientResponse replaceClient(Long id, ClientPutRequest request) {
+        List<Client> clientList = clientRepository.findByKey(request.key());
+        boolean hasMyKey = clientList.stream().anyMatch(
+                client -> client.getKey().equals(request.key()) &&
+                        !client.getId().equals(id)
+        );
+        if (!clientList.isEmpty() && hasMyKey) {
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
+        }
+
         Optional<Client> optionalClient = clientRepository.findById(id);
 
         Client client = optionalClient.orElseGet(Client::new);
@@ -94,6 +103,15 @@ public class ClientServiceImpl implements ClientService {
     public ClientResponse updateClient(Long id, ClientPatchRequest request) {
         Client existingClient = clientRepository.findById(id)
                 .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+
+        List<Client> clientList = clientRepository.findByKey(request.key());
+        boolean hasMyKey = clientList.stream().anyMatch(
+                client -> client.getKey().equals(request.key()) &&
+                        !client.getId().equals(id)
+        );
+        if (!clientList.isEmpty() && hasMyKey) {
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
+        }
 
         if (request.key() != null) {
             existingClient.setKey(request.key());
@@ -123,7 +141,7 @@ public class ClientServiceImpl implements ClientService {
     @Transactional
     public void deleteClientById(Long id) {
         Optional<Client> optional = clientRepository.findById(id);
-        if (! optional.isPresent()) {
+        if (optional.isEmpty()) {
             throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
         }
 
@@ -142,15 +160,25 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional(readOnly = true)
     public String getKeyById(Long id){
+        /*
         return clientRepository.findKeyById(id)
                 .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+         */
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return client.getKey();
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionById(Long id) {
+        /*
         return clientRepository.findDescriptionById(id)
                 .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+         */
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return client.getDescription();
     }
 
 

@@ -16,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
 import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +78,7 @@ class ClientServiceImplTest {
     }
 
     @Test
-    void createClient_exception() {
+    void createClient_exception_existing_key() {
         // GIVEN
         String existingClientKey = "Client-Key";
         String exceptionMsg = "Client already exists with key: " + existingClientKey;
@@ -301,7 +302,7 @@ class ClientServiceImplTest {
     }
 
     @Test
-    void updateClient_exception() {
+    void updateClient_exception_invalid_id() {
         // GIVEN
         Long clientId = 987654321L;
         String exceptionMsg = "Client not found with id: " + clientId;
@@ -320,6 +321,31 @@ class ClientServiceImplTest {
         verify(clientRepository, never()).save(any(Client.class));
     }
 
+    @Test
+    void updateClient_exception_existing_key() {
+        // GIVEN
+        long mockedClientId = 12345L;
+        String mockedClientKey = "Client-Key";
+
+        Client mockedClient = new Client();
+        mockedClient.setId(mockedClientId);
+        mockedClient.setKey(mockedClientKey);
+
+        Long clientId = mockedClientId + 1;
+        String exceptionMsg = "Client already exists with key: " + mockedClientKey;
+        ClientPatchRequest request = ClientPatchRequest.builder().key(mockedClientKey).build();
+
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(new Client()));
+        when(clientRepository.findByKey(request.key())).thenReturn(new ArrayList<>(List.of(mockedClient)));
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> clientService.updateClient(clientId, request))
+                .isInstanceOf(HttpStatus409AlreadyExistsException.class)
+                .hasMessageContaining(exceptionMsg);
+
+        // Verify
+        verify(clientRepository, never()).save(any(Client.class));
+    }
 
     @Test
     void updateSecret_normal() {
@@ -430,7 +456,7 @@ class ClientServiceImplTest {
     }
 
     @Test
-    void getClientById_exception() {
+    void getClientById_exception_invalid_id() {
         // GIVEN
         Long clientId = 13579L;
         String exceptionMsg = "Client not found with id: " + clientId;
@@ -451,7 +477,12 @@ class ClientServiceImplTest {
         Long clientId = 13579L;
         String mockedKey = "Mocked-Client-Key";
 
-        when(clientRepository.findKeyById(clientId)).thenReturn(Optional.of(mockedKey));
+        Client mockedClient = new Client();
+        mockedClient.setId(clientId);
+        mockedClient.setKey(mockedKey);
+
+        //when(clientRepository.findKeyById(clientId)).thenReturn(Optional.of(mockedKey));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(mockedClient));
 
         // WHEN & THEN
         String key = clientService.getKeyById(clientId);
@@ -460,12 +491,13 @@ class ClientServiceImplTest {
     }
 
     @Test
-    void getKeyById_exception() {
+    void getKeyById_exception_invalid_id() {
         // GIVEN
         Long clientId = 13579L;
         String exceptionMsg = "Client not found with id: " + clientId;
 
-        when(clientRepository.findKeyById(clientId)).thenReturn(Optional.empty());
+        //when(clientRepository.findKeyById(clientId)).thenReturn(Optional.empty());
+        when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.getKeyById(clientId))
@@ -480,7 +512,13 @@ class ClientServiceImplTest {
         Long clientId = 13579L;
         String mockedDescription = "Mocked-Client-Key";
 
-        when(clientRepository.findDescriptionById(clientId)).thenReturn(Optional.of(mockedDescription));
+        Client mockedClient = new Client();
+        mockedClient.setId(clientId);
+        mockedClient.setDescription(mockedDescription);
+
+
+        //when(clientRepository.findDescriptionById(clientId)).thenReturn(Optional.of(mockedDescription));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(mockedClient));
 
         // WHEN & THEN
         String description = clientService.getDescriptionById(clientId);
@@ -489,12 +527,31 @@ class ClientServiceImplTest {
     }
 
     @Test
-    void getDescriptionById_exception() {
+    void getDescriptionById_normal_null() {
+        // GIVEN
+        Long clientId = 13579L;
+
+        Client mockedClient = new Client();
+        mockedClient.setId(clientId);
+
+
+        //when(clientRepository.findDescriptionById(clientId)).thenReturn(Optional.of(mockedDescription));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(mockedClient));
+
+        // WHEN & THEN
+        String description = clientService.getDescriptionById(clientId);
+
+        assertThat(description).isNull();
+    }
+
+    @Test
+    void getDescriptionById_exception_invalid_id() {
         // GIVEN
         Long clientId = 13579L;
         String exceptionMsg = "Client not found with id: " + clientId;
 
-        when(clientRepository.findDescriptionById(clientId)).thenReturn(Optional.empty());
+        //when(clientRepository.findDescriptionById(clientId)).thenReturn(Optional.empty());
+        when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
         // WHEN & THEN
         assertThatThrownBy(() -> clientService.getDescriptionById(clientId))

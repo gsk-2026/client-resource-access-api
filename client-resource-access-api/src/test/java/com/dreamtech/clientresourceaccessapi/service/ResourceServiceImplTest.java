@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -88,7 +89,7 @@ class ResourceServiceImplTest {
     }
 
     @Test
-    void createResource_duplicateKey() {
+    void createResource_existing_eKey() {
         Resource existing =  mockedResource(
                         10L,
                         "KEY",
@@ -116,7 +117,7 @@ class ResourceServiceImplTest {
                         123L,
                         "My-Key",
                         "My-Type",
-                        "My dsecription");
+                        "My description");
 
         when(resourceRepository.findById(123L)).thenReturn(Optional.of(resource));
 
@@ -246,10 +247,10 @@ class ResourceServiceImplTest {
         assertEquals(request.description(), response.description());
     }
 
-
     @Test
-    void replaceResource_existing() {
-        Resource resource = mockedResource(123L,
+    void replaceResource_existing_id() {
+        long resource_id = 123L;
+        Resource resource = mockedResource(resource_id,
                 "old-key",
                 "old-type",
                 null);
@@ -264,11 +265,11 @@ class ResourceServiceImplTest {
                 .description(mockResource.getDescription())
                 .build();
 
-        when(resourceRepository.findById(any(Long.class))).thenReturn(Optional.of(resource));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(resource));
         when(resourceRepository.save(any(Resource.class))).thenReturn(mockResource);
 
         // WHEN & THEN
-        ResourceResponse response = resourceService.replaceResource(123L, request);
+        ResourceResponse response = resourceService.replaceResource(resource_id, request);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(mockResource.getId());
@@ -280,6 +281,7 @@ class ResourceServiceImplTest {
 
     @Test
     void replaceResource_new_resource() {
+        long resource_id = 987;
         Resource mockResource = mockedResource(369L,
                 "new-key",
                 "new-type",
@@ -291,11 +293,11 @@ class ResourceServiceImplTest {
                 .description(mockResource.getDescription())
                 .build();
 
-        when(resourceRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.empty());
         when(resourceRepository.save(any(Resource.class))).thenReturn(mockResource);
 
         // WHEN & THEN
-        ResourceResponse response = resourceService.replaceResource(987L, request);
+        ResourceResponse response = resourceService.replaceResource(resource_id, request);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(mockResource.getId());
@@ -305,8 +307,28 @@ class ResourceServiceImplTest {
         verify(resourceRepository, times(1)).save(any(Resource.class));
     }
 
+    @Test
+    void replaceResource_existing_key_exception() {
+        long resource_id = 123L;
+        Resource mockResource = mockedResource(456L,
+                "Resource-key",
+                "Resource-type",
+                "Resource--description");
 
+        ResourcePutRequest request = ResourcePutRequest.builder()
+                .key(mockResource.getKey())
+                .type(mockResource.getType())
+                .description(mockResource.getDescription())
+                .build();
 
+        when(resourceRepository.findByKey(mockResource.getKey())).thenReturn(List.of(mockResource));
+
+        // WHEN & THEN
+        String msg409 = "Resource already exists with key: Resource-key";
+        assertThatThrownBy(() -> resourceService.replaceResource(resource_id, request))
+                .isInstanceOf(HttpStatus409AlreadyExistsException.class)
+                .hasMessageContaining(msg409);
+    }
 
     @Test
     void searchResources_AllParamsPresent_ShouldCallFindByKeyAndTypeAndDescription() {
@@ -427,30 +449,68 @@ class ResourceServiceImplTest {
 
     @Test
     void getKeyById_success() {
-        when(resourceRepository.findKeyById(1L)).thenReturn(Optional.of("Returned-Key"));
+        long resource_id = 1L;
+        String mockedKey = "Returned-Key";
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+        mockedResource.setKey(mockedKey);
 
-        assertEquals("Returned-Key", resourceService.getKeyById(1L));
+        //when(resourceRepository.findKeyById(resource_id)).thenReturn(Optional.of(mockedKey));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(mockedResource));
+
+        assertEquals(mockedKey, resourceService.getKeyById(resource_id));
     }
 
     @Test
     void getTypeById_notFound() {
-        when(resourceRepository.findKeyById(1L)).thenReturn(Optional.empty());
+        long resource_id = 1L;
+        String mockedType = "Returned-Type";
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+        mockedResource.setType(mockedType);
 
-        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getKeyById(1L));
+        //when(resourceRepository.findKeyById(resource_id)).thenReturn(Optional.empty());
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.empty());
+
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getKeyById(resource_id));
     }
 
     @Test
     void getDescriptionById_success() {
-        when(resourceRepository.findDescriptionById(1L)).thenReturn(Optional.of("Returned Description"));
+        long resource_id = 1L;
+        String mockedDescription = "Returned Description";
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+        mockedResource.setDescription(mockedDescription);
 
-        assertEquals("Returned Description", resourceService.getDescriptionById(1L));
+        //when(resourceRepository.findDescriptionById(resource_id)).thenReturn(Optional.of(mockedDescription));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(mockedResource));
+
+        assertEquals(mockedDescription, resourceService.getDescriptionById(resource_id));
+    }
+
+    @Test
+    void getDescriptionById_null_description_success() {
+        long resource_id = 1L;
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+
+        //when(resourceRepository.findDescriptionById(resource_id)).thenReturn(Optional.of(mockedDescription));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(mockedResource));
+
+        String description = resourceService.getDescriptionById(resource_id);
+
+        assertThat(description).isNull();
     }
 
     @Test
     void getDescriptionById_notFound() {
-        when(resourceRepository.findDescriptionById(1L)).thenReturn(Optional.empty());
+        long resource_id = 1L;
 
-        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getDescriptionById(1L));
+        //when(resourceRepository.findDescriptionById(resource_id)).thenReturn(Optional.empty());
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.empty());
+
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getDescriptionById(resource_id));
     }
 
     

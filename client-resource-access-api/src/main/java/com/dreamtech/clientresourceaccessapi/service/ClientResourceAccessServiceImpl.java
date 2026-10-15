@@ -6,9 +6,13 @@ import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessResponse;
 import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.model.Client;
 import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
+import com.dreamtech.clientresourceaccessapi.model.Resource;
+import com.dreamtech.clientresourceaccessapi.repository.ClientRepository;
 import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 
+import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,13 +27,25 @@ import static java.text.MessageFormat.format;
 @RequiredArgsConstructor // Automatically injects ResourceRepository via constructor
 public class ClientResourceAccessServiceImpl implements ClientResourceAccessService {
 
+    private final ClientRepository clientRepository;
+    private final ResourceRepository resourceRepository;
     private final ClientResourceAccessRepository repository;
 
-    private final String msg404 = "ClientResourceAccess not found with (clientId,resourceId): ({0},{1})";
+    private final String clientMsg404 = "Client not found with id: {0}";
+    private final String resourceMsg404 = "Resource not found with id: {0}";
+    private final String craMsg404 = "ClientResourceAccess not found with (clientId,resourceId): ({0},{1})";
 
     @Override
     @Transactional
     public ClientResourceAccessResponse createClientResourceAccess(ClientResourceAccessPostRequest request) {
+        Optional<Client> client = clientRepository.findById(request.clientId());
+        if (client.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(clientMsg404, String.valueOf(request.clientId()))));
+        }
+        Optional<Resource> resource = resourceRepository.findById(request.resourceId());
+        if (resource.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(resourceMsg404, String.valueOf(request.resourceId()))));
+        }
         if ( repository.findByIds(request.clientId(), request.resourceId()).isPresent() ) {
             String msg409 = "ClientResourceAccess already exists with (clientId,resourceId): ({0},{1})";
             throw new HttpStatus409AlreadyExistsException(format(msg409, String.valueOf(request.clientId()), String.valueOf(request.resourceId())));
@@ -75,6 +91,15 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Override
     @Transactional
     public ClientResourceAccessResponse replaceClientResourceAccess(Long clientId, Long resourceId, ClientResourceAccessPutRequest request) {
+        Optional<Client> client = clientRepository.findById(clientId);
+        if (client.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(clientMsg404, String.valueOf(clientId))));
+        }
+        Optional<Resource> resource = resourceRepository.findById(resourceId);
+        if (resource.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(resourceMsg404, String.valueOf(resourceId))));
+        }
+
         Optional<ClientResourceAccess> optionalCR = repository.findByIds(clientId, resourceId);
 
         ClientResourceAccess cr = optionalCR.orElseGet(ClientResourceAccess::new);
@@ -91,17 +116,26 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Override
     @Transactional
     public ClientResourceAccessResponse updateClientResourceAccess(Long clientId, Long resourceId, ClientResourceAccessPatchRequest request) {
-        ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
-                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
+        ClientResourceAccess cra = repository.findByIds(clientId, resourceId)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
+
+        Optional<Client> client = clientRepository.findById(clientId);
+        if (client.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(clientMsg404, String.valueOf(clientId))));
+        }
+        Optional<Resource> resource = resourceRepository.findById(resourceId);
+        if (resource.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(resourceMsg404, String.valueOf(resourceId))));
+        }
 
         if (request.accessCode() != null) {
-            cr.setAccessCode(request.accessCode());
+            cra.setAccessCode(request.accessCode());
         }
         if (request.description() != null) {
-            cr.setDescription(request.description());
+            cra.setDescription(request.description());
         }
 
-        ClientResourceAccess updatedCda = repository.save(cr);
+        ClientResourceAccess updatedCda = repository.save(cra);
         return mapToResponse(updatedCda);
     }
 
@@ -109,8 +143,8 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Transactional
     public void deleteByIds(Long clientId, Long resourceId) {
         Optional<ClientResourceAccess> optional = repository.findByIds(clientId, resourceId);
-        if (! optional.isPresent()) {
-            throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
+        if (optional.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
         }
 
         repository.deleteByIds(clientId, resourceId);
@@ -120,7 +154,7 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Transactional(readOnly = true)
     public ClientResourceAccessResponse getByIds(Long clientId, Long resourceId) {
         ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
-                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
 
         return mapToResponse(cr);
     }
@@ -128,15 +162,25 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
     @Override
     @Transactional(readOnly = true)
     public String getAccessCodeByIds(Long clientId, Long resourceId)  {
+        /*
         return repository.findAccessCodeByIds(clientId, resourceId)
-            .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
+            .orElseThrow(() -> new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
+         */
+        ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
+        return cr.getAccessCode();
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionByIds(Long clientId, Long resourceId) {
+        /*
         return repository.findDescriptionByIds(clientId, resourceId)
-                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(clientId), String.valueOf(resourceId))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
+         */
+        ClientResourceAccess cr = repository.findByIds(clientId, resourceId)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(craMsg404, String.valueOf(clientId), String.valueOf(resourceId))));
+        return cr.getDescription();
     }
 
 

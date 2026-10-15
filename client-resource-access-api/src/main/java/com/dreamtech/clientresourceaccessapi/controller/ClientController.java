@@ -263,7 +263,7 @@ public class ClientController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @Operation(summary = "Update Client")
+    @Operation(summary = "Update Client Secret - Out of scope (to be implemented the next sprint)")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
