@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,6 +81,39 @@ class ClientResourceAccessApiOracleE2E {
         // This will print the active profiles (e.g., [test]) helping you match the YAML suffix
         String[] env = environment.getActiveProfiles();
         assertThat(Arrays.toString(env)).isEqualTo("[oracle-test]");
+    }
+
+
+    @Test
+    void createClient_exception_existing_key() {
+        // Arrange: setUp
+        int randomNum = ThreadLocalRandom.current().nextInt(999999);
+        String testKey = "createClient_exception_existing_key-Client-Key-" + randomNum;
+        String testDescription = "createClient_exception_existing_key-Client-Description";
+        Client client = createClient(testKey, testDescription);
+        currentTestClientId = client.getId();
+
+        // Act:
+        String url = baseUrl + "/api/v1/client/" + currentTestClientId;
+        ResponseEntity<ClientResponse> response = this.restTemplate.getForEntity(url, ClientResponse.class);
+        // Assert:
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().id()).isEqualTo(currentTestClientId);
+        assertThat(response.getBody().key()).isEqualTo(testKey);
+        assertThat(response.getBody().description()).isEqualTo(testDescription);
+
+        // duplicated key
+        String msg;
+        try {
+            testDescription = "createClient_exception_existing_key-Client-Description-DUPLICATED";
+            client = createClient(testKey, testDescription);
+            msg = client.getId().toString();
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("409 Conflict");
+
     }
 
 
@@ -275,7 +309,7 @@ class ClientResourceAccessApiOracleE2E {
     }
 
     @Test
-    void replaceClient_existing() {
+    void replaceClient_existing_with_valid_id() {
         // Arrange: setUp;
         String testKey = "Test-Client-Key";
         String testDescription = "replaceClient_existing-Client-Description";
@@ -304,7 +338,7 @@ class ClientResourceAccessApiOracleE2E {
     }
 
     @Test
-    void replaceClient_not_existing() {
+    void replaceClient_not_existing_with_invalid_id() {
         // Arrange: setUp;
         String testKey = "Test-Client-Key";
         String testDescription = "replaceClient_not_existing-Client-Description";
@@ -338,7 +372,39 @@ class ClientResourceAccessApiOracleE2E {
 
 
     @Test
-    void updateClient_existing() {
+    void replaceClient_exception_with_existing_key() {
+        // Arrange: setUp;
+        int randomNum = ThreadLocalRandom.current().nextInt(999999);
+        String testKey = "replaceClient_exception_with_existing_key-Client-Key-" + randomNum;
+        String testDescription = "replaceClient_exception_with_existing_key-Client-Description";
+        Client client = createClient(testKey, testDescription);
+        currentTestClientId = client.getId();
+
+        // Act
+        String url = baseUrl + "/api/v1/client/" + (currentTestClientId+1000000);
+        ClientPutRequest request = ClientPutRequest.builder()
+                .key(testKey)
+                .description(testDescription+"-UPDATED")
+                .build();
+
+        HttpEntity<ClientPutRequest> requestEntity = new HttpEntity<>(request);
+
+        String msg;
+        try {
+            ResponseEntity<ClientResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.PUT, requestEntity, ClientResponse.class
+            );
+            ClientResponse body = response.getBody();
+            msg = (body != null) ? body.key() : null;
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("409 Conflict");
+    }
+
+
+    @Test
+    void updateClient_existing_client() {
         // Arrange: setUp;
         String testKey = "Test-Client-Key";
         String testDescription = "updateClient_existing-Client-Description";
@@ -367,7 +433,7 @@ class ClientResourceAccessApiOracleE2E {
     }
 
     @Test
-    void updateClient_not_existing() {
+    void updateClient_not_existing_client() {
         // Arrange: setUp;
         String testKey = "Test-Client-Key";
         String testDescription = "updateClient_not_existing-Client-Description";
@@ -398,6 +464,64 @@ class ClientResourceAccessApiOracleE2E {
         org.junit.jupiter.api.Assertions.assertTrue(responseBody.contains("\"error\":\"Not Found\""));
     }
 
+    @Test
+    void updateClient_exception_with_existing_key() {
+        // Arrange: setUp;
+        int randomNum_1 = ThreadLocalRandom.current().nextInt(999999);
+        String testKey_1 = "updateClient_exception_with_existing_key-Client-Key-" + randomNum_1;
+        String testDescription_1 = "updateClient_exception_with_existing_key-Client-Description-" + randomNum_1;
+        Client client_1 = createClient(testKey_1, testDescription_1);
+        currentTestClientId = client_1.getId();
+
+        int randomNum_2 = ThreadLocalRandom.current().nextInt(999999);
+        String testKey_2 = "updateClient_exception_with_existing_key-Client-Key-" + randomNum_2;
+        String testDescription_2 = "updateClient_exception_with_existing_key-Client-Description-" + randomNum_2;
+        Client client_2 = createClient(testKey_2, testDescription_2);
+        long currentTestClientId_2 = client_2.getId();
+
+        // Act
+        String url = baseUrl + "/api/v1/client/" + currentTestClientId_2;
+        ClientPatchRequest request = ClientPatchRequest.builder()
+                .key(testKey_1)
+                .description(testDescription_1+"-UPDATED")
+                .build();
+
+        HttpEntity<ClientPatchRequest> requestEntity = new HttpEntity<>(request);
+
+        String msg;
+        try {
+            ResponseEntity<ClientResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.PATCH, requestEntity, ClientResponse.class
+            );
+            ClientResponse body = response.getBody();
+            msg = (body != null) ? body.key() : null;
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("409 Conflict");
+    }
+
+
+
+
+    @Test
+    void createResource_exception_duplicated_key() {
+        // Arrange: setUp
+        String testKey = "createResource_exception_duplicated_key-Resource-Key";
+        String testType = "createResource_exception_duplicated_key-Resource-Type";
+        String testDescription = "createResource_exception_duplicated_key-Resource-Description";
+        Resource resource = createResource(testKey, testType, testDescription);
+        currentTestResourceId = resource.getId();
+
+        String msg;
+        try {
+            resource = createResource(testKey, testType, testDescription);
+            msg = resource.getKey();
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("409 Conflict");
+    }
 
 
     @Test
@@ -671,6 +795,43 @@ class ClientResourceAccessApiOracleE2E {
         assertThat(response.getBody().description()).isEqualTo(request.description());
     }
 
+    @Test
+    void replaceResource_exception_duplicated_key() {
+        // Arrange: setUp;
+        int randomNum = ThreadLocalRandom.current().nextInt(999999);
+        String testKey = "replaceResource_exception_duplicated_key-Resource-Key="+randomNum;
+        String testType = "replaceResource_exception_duplicated_key-Resource-Type-"+randomNum;
+        String testDescription = "replaceResource_exception_duplicated_key-Resource-Description-"+randomNum;
+        Resource resource = createResource(testKey, testType, testDescription);
+        currentTestResourceId = resource.getId();
+        //
+        resource = createResource(testKey+"_2", testType+"_2", testDescription+"_2");
+        currentTestResourceId = resource.getId();
+
+        // Act
+        String url = baseUrl + "/api/v1/resource/" + currentTestResourceId;
+        ResourcePostRequest request = ResourcePostRequest.builder()
+                .key(testKey)
+                .type(testDescription)
+                .description("existingResourceDescription-UPDATED")
+                .build();
+
+        HttpEntity<ResourcePostRequest> requestEntity = new HttpEntity<>(request);
+
+        String msg;
+        try {
+            ResponseEntity<ResourceResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.PUT, requestEntity, ResourceResponse.class
+            );
+            ResourceResponse body = response.getBody();
+            msg = (body != null) ? body.key() : null;
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("409 Conflict");
+    }
+
+
 
     @Test
     void updateResource_existing() {
@@ -706,8 +867,8 @@ class ClientResourceAccessApiOracleE2E {
     @Test
     void updateResource_not_existing() {
         // Arrange: setUp;
-        String testKey = "Test-Resource-Key";
-        String testType = "Test-Resource-Type";
+        String testKey = "updateResource_not_existing-Resource-Key";
+        String testType = "updateResource_not_existing-Resource-Type";
         String testDescription = "updateResource_not_existing-Resource-Description";
         Resource resource = createResource(testKey, testType, testDescription);
         currentTestResourceId = resource.getId();
