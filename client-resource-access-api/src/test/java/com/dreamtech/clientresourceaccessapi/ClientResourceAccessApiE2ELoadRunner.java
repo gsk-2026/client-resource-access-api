@@ -46,12 +46,13 @@ public class ClientResourceAccessApiE2ELoadRunner {
 
         String[] customizedArgs = new String[] {
                 "--spring.profiles.active=load-test",
-                "--spring.jpa.hibernate.ddl-auto=update",
                 "--spring.datasource.url=" + oracleContainer.getJdbcUrl(),
                 "--spring.datasource.username=" + oracleContainer.getUsername(),
                 "--spring.datasource.password=" + oracleContainer.getPassword(),
                 "--server.port=" + serverPort,
                 "--spring.datasource.hikari.maximum-pool-size=50",
+                "--spring.jpa.hibernate.ddl-auto=update",
+                "--spring.jpa.database-platform=org.hibernate.dialect.OracleDialect",
                 "--logging.level.root=WARN"
         };
 
