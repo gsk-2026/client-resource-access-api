@@ -9,7 +9,7 @@ spring:
     database-platform: ${TEST_DB_PLATFORM:org.hibernate.dialect.OracleDialect}
     show-sql: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${TEST_DB_DDL_AUTO:update}
       format_sql: true
 
 
