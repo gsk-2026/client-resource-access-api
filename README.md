@@ -20,6 +20,8 @@ java-api/ (Standalone Workspace Root)
 │
 ├── client-resource-access-api/        # [Active Microservice Project Module]
 │
+├── practice_softwaretesting_api/        # [Active Microservice Project Module]
+│
 ├── new-a-api/                         # [Future New A Standalone Microservice Folder Example]
 │
 ├── new-b-api/                         # [Future New B Standalone Microservice Folder Example]
