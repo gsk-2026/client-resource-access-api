@@ -200,7 +200,7 @@ class ClientResourceAccessControllerTest {
                         "Description-1010-2010")));
 
         mockMvc.perform(get("/api/v1/client-resource-access/search")
-                                .param("access-code","AccessCode-1010-2010"))
+                        .param("access-code","AccessCode-1010-2010"))
 
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -311,8 +311,8 @@ class ClientResourceAccessControllerTest {
                         "AccessCode-1111-2222", "Description-1111-2222-Update"));
 
         mockMvc.perform(put("/api/v1/client-resource-access/client/1014/resource/2014")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.clientId").value(1111L))
                 .andExpect(jsonPath("$.resourceId").value(2222L))
@@ -345,8 +345,8 @@ class ClientResourceAccessControllerTest {
                         "Description-Updated"));
 
         mockMvc.perform(patch("/api/v1/client-resource-access/client/1015/resource/2015")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.clientId").value(10015L))
                 .andExpect(jsonPath("$.resourceId").value(20015L))

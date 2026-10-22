@@ -70,11 +70,11 @@ public class ClientResourceAccessApiDockerE2E {
     static void setupAll() {
         // Only spin up Testcontainers if USE_LOCAL_DOCKER=true is provided
         //if ("true".equalsIgnoreCase(System.getenv("USE_LOCAL_DOCKER"))) {
-            oracleContainer = new OracleContainer(DockerImageName.parse(
-                    "gvenzl/oracle-free:23-slim-faststart"))
-                    .withUsername("e2e_username")         // dummy-username used by container to create Username
-                    .withPassword("secure_e2e_password"); // dummy-password used by container to create Password
-            oracleContainer.start();
+        oracleContainer = new OracleContainer(DockerImageName.parse(
+                "gvenzl/oracle-free:23-slim-faststart"))
+                .withUsername("e2e_username")         // dummy-username used by container to create Username
+                .withPassword("secure_e2e_password"); // dummy-password used by container to create Password
+        oracleContainer.start();
         //}
     }
 
@@ -953,6 +953,33 @@ public class ClientResourceAccessApiDockerE2E {
         }
 
         @Test
+        void deleteClient_unprossable() {
+            Client client = populateClient("deleteClient_unprossable-Client-Key-A",
+                    "deleteClient_unprossable-VeryStrongSecrectPassword-A",
+                    "deleteClient_unprossable-Client-Description-A");
+
+            Resource resource = populateResource("deleteClient_unprossable-Resource-Key-A",
+                    "deleteClient_unprossable-Resource-Type-A",
+                    "deleteClient_unprossable-Resource-Description-A");
+
+            String access_code = "deleteClient_unprossable-AccessCode-A";
+            String description = "deleteClient_unprossable-Description-A";
+            ClientResourceAccess cra = populateClientResourceAccess(client.getId(), resource.getId(), access_code, description);
+
+            given()
+                    .pathParam("id", cra.getClientId())
+                    .when()
+                    .delete("/api/v1/client/{id}")
+                    .then()
+                    .log().all()
+                    .statusCode(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                    .body("status", equalTo(422))
+                    .body("error", equalTo("Unprocessable Content"))
+                    .body("path", equalTo(format("/api/v1/client/{0}", String.valueOf(cra.getClientId()))));
+        }
+
+
+        @Test
         void deleteResourceById() {
             Resource resource = populateResource("deleteResourceById-Resource-Key-D",
                     "deleteResourceById-Resource-Type-D",
@@ -987,17 +1014,44 @@ public class ClientResourceAccessApiDockerE2E {
         }
 
         @Test
+        void deleteResource_unprossable() {
+            Client client = populateClient("deleteResource_unprossable-Client-Key-A",
+                    "deleteResource_unprossable-VeryStrongSecrectPassword-A",
+                    "deleteResource_unprossable-Client-Description-A");
+
+            Resource resource = populateResource("deleteResource_unprossable-Resource-Key-A",
+                    "deleteResource_unprossable-Resource-Type-A",
+                    "deleteResource_unprossable-Resource-Description-A");
+
+            String access_code = "deleteResource_unprossable-AccessCode-A";
+            String description = "deleteClient_unprossable-Description-A";
+            ClientResourceAccess cra = populateClientResourceAccess(client.getId(), resource.getId(), access_code, description);
+
+            given()
+                    .pathParam("id", cra.getResourceId())
+                    .when()
+                    .delete("/api/v1/client/{id}")
+                    .then()
+                    .log().all()
+                    .statusCode(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                    .body("status", equalTo(422))
+                    .body("error", equalTo("Unprocessable Content"))
+                    .body("path", equalTo(format("/api/v1/client/{0}", String.valueOf(cra.getResourceId()))));
+        }
+
+
+        @Test
         void deleteClientResourceAccess() {
-            Client client =populateClient("replaceClientResourceAccess_existing_ids-Client-Key-A",
-                    "replaceClientResourceAccess_existing_ids-VeryStrongSecrectPassword-A",
-                    "replaceClientResourceAccess_existing_ids-Client-Description-A");
+            Client client =populateClient("deletdeleteClientResourceAccesst_unprossable-Client-Key-A",
+                    "deletdeleteClientResourceAccesst_unprossable-VeryStrongSecrectPassword-A",
+                    "deletdeleteClientResourceAccesst_unprossable-Client-Description-A");
 
-            Resource resource = populateResource("replaceClientResourceAccess_existing_ids-Resource-Key-A",
-                    "replaceClientResourceAccess_existing_ids-Resource-Type-A",
-                    "replaceClientResourceAccess_existing_ids-Resource-Description-A");
+            Resource resource = populateResource("deletdeleteClientResourceAccesst_unprossable-Resource-Key-A",
+                    "deletdeleteClientResourceAccesst_unprossable-Resource-Type-A",
+                    "deletdeleteClientResourceAccesst_unprossable-Resource-Description-A");
 
-            String access_code = "replaceClientResourceAccess_existing_ids-AccessCode-A";
-            String description = "replaceClientResourceAccess_existing_ids-Description-A";
+            String access_code = "deletdeleteClientResourceAccesst_unprossable-AccessCode-A";
+            String description = "deletdeleteClientResourceAccesst_unprossable-Description-A";
 
             ClientResourceAccess cra = populateClientResourceAccess(client.getId(), resource.getId(), access_code, description);
 
@@ -1013,16 +1067,16 @@ public class ClientResourceAccessApiDockerE2E {
 
         @Test
         void deleteClientResourceAccess_invalid_client() {
-            Client client =populateClient("replaceClientResourceAccess_existing_ids-Client-Key-A",
-                    "replaceClientResourceAccess_existing_ids-VeryStrongSecrectPassword-A",
-                    "replaceClientResourceAccess_existing_ids-Client-Description-A");
+            Client client =populateClient("deleteClientResourceAccess_invalid_client-Client-Key-A",
+                    "deleteClientResourceAccess_invalid_client-VeryStrongSecrectPassword-A",
+                    "deleteClientResourceAccess_invalid_client-Client-Description-A");
 
-            Resource resource = populateResource("replaceClientResourceAccess_existing_ids-Resource-Key-A",
-                    "replaceClientResourceAccess_existing_ids-Resource-Type-A",
-                    "replaceClientResourceAccess_existing_ids-Resource-Description-A");
+            Resource resource = populateResource("deleteClientResourceAccess_invalid_client-Resource-Key-A",
+                    "deleteClientResourceAccess_invalid_client-Resource-Type-A",
+                    "deleteClientResourceAccess_invalid_client-Resource-Description-A");
 
-            String access_code = "replaceClientResourceAccess_existing_ids-AccessCode-A";
-            String description = "replaceClientResourceAccess_existing_ids-Description-A";
+            String access_code = "deleteClientResourceAccess_invalid_client-AccessCode-A";
+            String description = "deleteClientResourceAccess_invalid_client-Description-A";
 
             ClientResourceAccess cra = populateClientResourceAccess(client.getId(), resource.getId(), access_code, description);
 
@@ -1045,16 +1099,16 @@ public class ClientResourceAccessApiDockerE2E {
 
         @Test
         void deleteClientResourceAccess_invalid_resource() {
-            Client client =populateClient("replaceClientResourceAccess_existing_ids-Client-Key-A",
-                    "replaceClientResourceAccess_existing_ids-VeryStrongSecrectPassword-A",
-                    "replaceClientResourceAccess_existing_ids-Client-Description-A");
+            Client client =populateClient("deleteClientResourceAccess_invalid_resource-Client-Key-A",
+                    "deleteClientResourceAccess_invalid_resource-VeryStrongSecrectPassword-A",
+                    "deleteClientResourceAccess_invalid_resource-Client-Description-A");
 
-            Resource resource = populateResource("replaceClientResourceAccess_existing_ids-Resource-Key-A",
-                    "replaceClientResourceAccess_existing_ids-Resource-Type-A",
-                    "replaceClientResourceAccess_existing_ids-Resource-Description-A");
+            Resource resource = populateResource("deleteClientResourceAccess_invalid_resource-Resource-Key-A",
+                    "deleteClientResourceAccess_invalid_resource-Resource-Type-A",
+                    "deleteClientResourceAccess_invalid_resource-Resource-Description-A");
 
-            String access_code = "replaceClientResourceAccess_existing_ids-AccessCode-A";
-            String description = "replaceClientResourceAccess_existing_ids-Description-A";
+            String access_code = "deleteClientResourceAccess_invalid_resource-AccessCode-A";
+            String description = "deleteClientResourceAccess_invalid_resource-Description-A";
 
             ClientResourceAccess cra = populateClientResourceAccess(client.getId(), resource.getId(), access_code, description);
 

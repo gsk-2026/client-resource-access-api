@@ -181,8 +181,8 @@ public class ClientController {
     // curl -X POST -d 'key={key}&description={description}' http://www.dreamtechproduct.com/api/v1/client
     // POST request: add a client record with enclosed data in the body of HTTP request
     @PostMapping(
-        consumes = MediaType.APPLICATION_JSON_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
     @Operation(summary = "Create Client")
     @ApiResponses(value = {
@@ -220,7 +220,7 @@ public class ClientController {
                     content = @Content(schema = @Schema(implementation = ClientResponse.class))
             )
     })
-        public ResponseEntity<ClientResponse> putRequest(
+    public ResponseEntity<ClientResponse> putRequest(
             @PathVariable("id") Long clientId,
             @Valid @RequestBody ClientPutRequest payLoad
     ) {

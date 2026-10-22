@@ -4,7 +4,10 @@ import com.dreamtech.clientresourceaccessapi.dto.ResourcePatchRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ResourcePostRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ResourcePutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ResourceResponse;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus422UnprocessableException;
+import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.model.Resource;
+import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,11 +21,14 @@ import java.util.Optional;
 
 import static java.text.MessageFormat.format;
 
-@Service 
+@Service
 public class ResourceServiceImpl implements ResourceService {
 
     @Autowired // Avoid this pattern
     private ResourceRepository resourceRepository;
+
+    @Autowired
+    private ClientResourceAccessRepository clientResourceAccessRepository;
 
     private final String msg404 = "Resource not found with id: {0}";
 
@@ -156,6 +162,12 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional
     public void deleteResourceById(Long id) {
+        List<ClientResourceAccess> reponseList  = clientResourceAccessRepository.findByResourceId(id);
+        if (reponseList != null && !reponseList.isEmpty()) {
+            String msg422 = "Resource cannot be deleted because ClientResourceAccess has records with resourceId: {0}";
+            throw (new HttpStatus422UnprocessableException(format(msg422, String.valueOf(id))));
+        }
+
         Optional<Resource> optional = resourceRepository.findById(id);
         if (optional.isEmpty()) {
             throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));

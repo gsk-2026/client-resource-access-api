@@ -70,10 +70,10 @@ class ClientResourceAccessServiceImplTest {
                 .description("Description-1001-2001")
                 .build();
         ClientResourceAccess entity = mockedEntity(
-                        1101L,
-                        2201L,
-                        "ACCESS-1101-2201",
-                        "Description-1101-2201");
+                1101L,
+                2201L,
+                "ACCESS-1101-2201",
+                "Description-1101-2201");
 
         given(repository.findByIds(1001L,2001L)).willReturn(Optional.empty());
         given(clientRepository.findById(1001L)).willReturn(Optional.of(new Client()));
@@ -105,11 +105,11 @@ class ClientResourceAccessServiceImplTest {
         given(repository.findByIds(1002L,2002L)).willReturn(Optional.of(new ClientResourceAccess()));
 
         ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
-                        .clientId(1002L)
-                        .resourceId(2002L)
-                        .accessCode("ACCESS-002-New")
-                        .description("Description 002 New")
-                        .build();
+                .clientId(1002L)
+                .resourceId(2002L)
+                .accessCode("ACCESS-002-New")
+                .description("Description 002 New")
+                .build();
 
         assertThatThrownBy(() -> service.createClientResourceAccess(request))
                 .isInstanceOf(HttpStatus409AlreadyExistsException.class)
@@ -271,7 +271,7 @@ class ClientResourceAccessServiceImplTest {
                                 "ACCESS-CODE-205",
                                 "DESCRIPTION-205"))
 
-                        );
+                );
 
         List<ClientResourceAccessResponse> result = service.searchClientResourceAccesses("ACCESS-CODE", "DESCRIPTION");
 
@@ -296,10 +296,10 @@ class ClientResourceAccessServiceImplTest {
     @Test
     void replaceClientResourceAccess_existing() {
         ClientResourceAccess existing = mockedEntity(
-                        1006L,
-                        2006L,
-                        "ACCESS-OLD",
-                        "DESCRIPTIONOld");
+                1006L,
+                2006L,
+                "ACCESS-OLD",
+                "DESCRIPTIONOld");
 
         given(clientRepository.findById(1006L)).willReturn(Optional.of(new Client()));
         given(resourceRepository.findById(2006L)).willReturn(Optional.of(new Resource()));
@@ -313,9 +313,9 @@ class ClientResourceAccessServiceImplTest {
                 .build();
 
         ClientResourceAccessResponse response = service.replaceClientResourceAccess(
-                        1006L,
-                        2006L,
-                        request);
+                1006L,
+                2006L,
+                request);
 
         assertThat(response).isNotNull();
         assertThat(response.clientId()).isEqualTo(1006L);
@@ -395,10 +395,10 @@ class ClientResourceAccessServiceImplTest {
     @Test
     void updateClientResourceAccess_accessCodeOnly() {
         ClientResourceAccess entity = mockedEntity(
-                        null,
-                        null,
-                        "OLD",
-                        null);
+                null,
+                null,
+                "OLD",
+                null);
 
         given(clientRepository.findById(1008L)).willReturn(Optional.of(new Client()));
         given(resourceRepository.findById(2008L)).willReturn(Optional.of(new Resource()));
@@ -411,9 +411,9 @@ class ClientResourceAccessServiceImplTest {
                 .accessCode("NEW").description(null).build();
 
         ClientResourceAccessResponse response = service.updateClientResourceAccess(
-                        1008L,
-                        2008L,
-                        request);
+                1008L,
+                2008L,
+                request);
 
         assertThat(response.accessCode()).isEqualTo("NEW");
     }
@@ -428,9 +428,9 @@ class ClientResourceAccessServiceImplTest {
                 .accessCode("NEW").description("Desc").build();
 
         assertThatThrownBy(() -> service.updateClientResourceAccess(
-                        1009L,
-                        2009L,
-                        request))
+                1009L,
+                2009L,
+                request))
                 .isInstanceOf(HttpStatus404NotFoundException.class)
                 .hasMessageContaining(msg404);
     }
@@ -476,10 +476,10 @@ class ClientResourceAccessServiceImplTest {
     @Test
     void deleteByIds_success() {
         ClientResourceAccess entity = mockedEntity(
-                        1010L,
-                        2010L,
-                        "AAA",
-                        "BBB");
+                1010L,
+                2010L,
+                "AAA",
+                "BBB");
 
         given(repository.findByIds(1010L,2010L))
                 .willReturn(Optional.of(entity));
@@ -513,10 +513,10 @@ class ClientResourceAccessServiceImplTest {
     @Test
     void getByIds_success() {
         ClientResourceAccess entity = mockedEntity(
-                        1012L,
-                        2012L,
-                        "ACCESS",
-                        "DESCRIPTION");
+                1012L,
+                2012L,
+                "ACCESS",
+                "DESCRIPTION");
 
         given(repository.findByIds(1012L,2012L))
                 .willReturn(Optional.of(entity));

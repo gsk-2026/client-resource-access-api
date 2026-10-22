@@ -108,7 +108,7 @@ class ClientControllerTest {
 
         // When & Then:
         mockMvc.perform(get("/api/v1/client/{id}", missingClientId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());  // Asserts HTTP 404
     }
 
@@ -133,7 +133,7 @@ class ClientControllerTest {
 
         // When & Then:
         mockMvc.perform(delete("/api/v1/client/{id}", missingClientId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());  // HTTP 404
     }
 
@@ -310,8 +310,8 @@ class ClientControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/client/search")
-                .param("key", clientKey)
-                .param("description", clientDescription)
+                        .param("key", clientKey)
+                        .param("description", clientDescription)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
@@ -342,8 +342,8 @@ class ClientControllerTest {
 
         // Act & Assert:
         mockMvc.perform(post("/api/v1/client")
-                    .contentType(MediaType.APPLICATION_JSON)        // Set Content-Type: application/json
-                    .content(jsonPayload))
+                        .contentType(MediaType.APPLICATION_JSON)        // Set Content-Type: application/json
+                        .content(jsonPayload))
                 .andExpect(status().isCreated())                         // Expect HTTP 200 OK
                 .andExpect(jsonPath("$.id").value(mockResponse.id()))
                 .andExpect(jsonPath("$.key").value(mockResponse.key()))
@@ -369,7 +369,7 @@ class ClientControllerTest {
         mockMvc.perform(post("/api/v1/client")
                         .contentType(MediaType.APPLICATION_JSON)    // Set Content-Type: application/json
                         .content(jsonPayload))
-                        .andExpect(status().isNotFound());      // Expect HTTP 404
+                .andExpect(status().isNotFound());      // Expect HTTP 404
     }
 
 
