@@ -49,8 +49,8 @@ public class ClientResourceAccessController {
             @PathVariable Long clientId,
             @PathVariable Long resourceId
     ) {
-            ClientResourceAccessResponse response = service.getByIds(clientId, resourceId);
-            return ResponseEntity.ok(response);
+        ClientResourceAccessResponse response = service.getByIds(clientId, resourceId);
+        return ResponseEntity.ok(response);
     }
 
     // 1.2 DELETE: Remove a record using composite path parameters, Matches /api/v1/client-resource-access/client/{clientId}/resource/{resourceId}
@@ -218,7 +218,7 @@ public class ClientResourceAccessController {
                     content = @Content(schema = @Schema(implementation = ClientResourceAccessResponse.class))
             )
     })
-        public ResponseEntity<ClientResourceAccessResponse> putClient(
+    public ResponseEntity<ClientResourceAccessResponse> putClient(
             @PathVariable("clientId") Long clientId,
             @PathVariable("resourceId") Long resourceId,
             @Valid @RequestBody ClientResourceAccessPutRequest payLoad

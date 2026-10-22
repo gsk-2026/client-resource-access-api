@@ -321,13 +321,13 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
                 accessCrudScenario.injectOpen(nothingFor(Duration.ofSeconds(30)), atOnceUsers(loops))
 
         )
-        .protocols(httpProtocol)
-        .assertions(
-                global().successfulRequests().percent().gte(90.0),
-                global().responseTime().mean().lte(300),
-                global().responseTime().percentile3().lte(800),
-                global().failedRequests().count().lte(5L)
-        );
+                .protocols(httpProtocol)
+                .assertions(
+                        global().successfulRequests().percent().gte(90.0),
+                        global().responseTime().mean().lte(300),
+                        global().responseTime().percentile3().lte(800),
+                        global().failedRequests().count().lte(5L)
+                );
     }
 
     private static String getPortFromProperties() {
@@ -341,7 +341,7 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
                 return "8080"; // Default fallback if file is missing
             }
             prop.load(input);
-              return prop.getProperty("server.port", "8080");
+            return prop.getProperty("server.port", "8080");
 
         } catch (Exception ex) {
             return "8080"; // Default fallback on error

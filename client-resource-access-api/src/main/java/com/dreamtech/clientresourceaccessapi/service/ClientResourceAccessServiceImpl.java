@@ -161,6 +161,32 @@ public class ClientResourceAccessServiceImpl implements ClientResourceAccessServ
 
     @Override
     @Transactional(readOnly = true)
+    public List<ClientResourceAccessResponse> getByClientId(Long clientId) {
+        List<ClientResourceAccess> craList = repository.findByClientId(clientId);
+
+        List<ClientResourceAccessResponse> responseList = new ArrayList<>();
+        for (ClientResourceAccess cra : craList){
+            responseList.add(mapToResponse(cra));
+        }
+
+        return responseList;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClientResourceAccessResponse> getByResourceId(Long resourceId) {
+        List<ClientResourceAccess> craList = repository.findByResourceId(resourceId);
+
+        List<ClientResourceAccessResponse> responseList = new ArrayList<>();
+        for (ClientResourceAccess cra : craList){
+            responseList.add(mapToResponse(cra));
+        }
+
+        return responseList;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public String getAccessCodeByIds(Long clientId, Long resourceId)  {
         /*
         return repository.findAccessCodeByIds(clientId, resourceId)

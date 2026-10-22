@@ -23,6 +23,12 @@ public interface ClientResourceAccessRepository extends JpaRepository<ClientReso
     @Query("select cra from ClientResourceAccess cra where cra.description like concat('%', :description, '%')")
     List<ClientResourceAccess> findByDescription(@Param("description") String description);
 
+    @Query("select cra from ClientResourceAccess cra where cra.clientId = :clientId")
+    List<ClientResourceAccess> findByClientId(@Param("clientId") Long clientId);
+
+    @Query("select cra from ClientResourceAccess cra where cra.resourceId = :resourceId")
+    List<ClientResourceAccess> findByResourceId(@Param("resourceId") Long resourceId);
+
     @Query("SELECT cra FROM ClientResourceAccess cra WHERE cra.clientId = :clientId AND cra.resourceId = :resourceId")
     Optional<ClientResourceAccess> findByIds(@Param("clientId") Long clientId, @Param("resourceId") Long resourceId);
 
