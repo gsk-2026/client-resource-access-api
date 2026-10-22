@@ -7,22 +7,22 @@ env:
 spring:
   application:
     name: client-resource-access-api
-
   datasource:
-    driver-class-name: oracle.jdbc.OracleDriver
-
+    url: ${TEST_DB_URL:gvenzl/oracle-free:23-slim-faststart}
+    username: ${TEST_DB_USER:e2e_username}
+    password: ${TEST_DB_PSWD:secure_e2e_password}
+    driver-class-name: ${TEST_DB_DRIVER:oracle.jdbc.OracleDriver}
   jpa:
+    database-platform: ${TEST_DB_PLATFORM:org.hibernate.dialect.OracleDialect}
     show-sql: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${TEST_DB_DDL_AUTO:create-drop}
     properties:
       hibernate:
+        dialect: ${APP_DB_PLATFORM:org.hibernate.dialect.OracleDialect}
         format_sql: true
         jdbc:
           fetch_size: 100
-
-server:
-  port: 8080
 
 logging:
   level:

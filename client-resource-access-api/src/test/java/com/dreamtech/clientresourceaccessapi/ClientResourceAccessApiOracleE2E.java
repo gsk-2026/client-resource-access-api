@@ -319,9 +319,9 @@ class ClientResourceAccessApiOracleE2E {
         // Act
         String url = baseUrl + "/api/v1/client/" + currentTestClientId;
         ClientPutRequest request = ClientPutRequest.builder()
-                    .key(testKey)
-                    .description(testDescription+"-UPDATED")
-                    .build();
+                .key(testKey)
+                .description(testDescription+"-UPDATED")
+                .build();
 
         HttpEntity<ClientPutRequest> requestEntity = new HttpEntity<>(request);
 
@@ -501,7 +501,41 @@ class ClientResourceAccessApiOracleE2E {
         assertThat(msg).contains("409 Conflict");
     }
 
+    @Test
+    void deleteClient_unprocessable() {
+        // Arrange: setUp;
+        String testKey_1 = "deleteClient_unprocessable-Client-Key-A";
+        String testDescription_1 = "deleteClient_unprocessable-Client-Description-A";
+        Client client_1 = createClient(testKey_1, testDescription_1);
+        currentTestClientId = client_1.getId();
 
+        String testKey = "deleteClient_unprocessable-Resource-Key-A";
+        String testType = "deleteClient_unprocessable-Resource-Type-A";
+        String testDescription = "deleteClient_unprocessable-Resource-Description-A";
+        Resource resource = createResource(testKey, testType, testDescription);
+        currentTestResourceId = resource.getId();
+
+        String testAccessCode = "deleteClient_unprocessable-Access-Code-A";
+        testDescription = "deleteClient_unprocessable-ClientResourceAccess-Description-A";
+        ClientResourceAccess access = createClientResourceAccess(
+                currentTestClientId, currentTestResourceId, testAccessCode, testDescription
+        );
+        currentTestClientResourceAccess_ClientId = access.getClientId();
+        currentTestClientResourceAccess_ResourceId = access.getResourceId();
+
+        String msg;
+        try {
+            String url = baseUrl + "/api/v1/client/" + currentTestClientResourceAccess_ClientId;
+            ResponseEntity<ClientResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.DELETE, HttpEntity.EMPTY, ClientResponse.class
+            );
+            msg = response.getStatusCode().toString();
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("422");
+        assertThat(msg).contains("Unprocessable Content");
+    }
 
 
     @Test
@@ -897,6 +931,41 @@ class ClientResourceAccessApiOracleE2E {
         org.junit.jupiter.api.Assertions.assertTrue(responseBody.contains("\"error\":\"Not Found\""));
     }
 
+    @Test
+    void deleteResource_unprocessable() {
+        // Arrange: setUp;
+        String testKey_1 = "deleteResource_unprocessable-Client-Key-A";
+        String testDescription_1 = "deleteResource_unprocessable-Client-Description-A";
+        Client client_1 = createClient(testKey_1, testDescription_1);
+        currentTestClientId = client_1.getId();
+
+        String testKey = "deleteResource_unprocessable-Resource-Key-A";
+        String testType = "deleteResource_unprocessable-Resource-Type-A";
+        String testDescription = "deleteResource_unprocessable-Resource-Description-A";
+        Resource resource = createResource(testKey, testType, testDescription);
+        currentTestResourceId = resource.getId();
+
+        String testAccessCode = "deleteResource_unprocessable-Access-Code-A";
+        testDescription = "deleteClient_unprocessable-ClientResourceAccess-Description-A";
+        ClientResourceAccess access = createClientResourceAccess(
+                currentTestClientId, currentTestResourceId, testAccessCode, testDescription
+        );
+        currentTestClientResourceAccess_ClientId = access.getClientId();
+        currentTestClientResourceAccess_ResourceId = access.getResourceId();
+
+        String msg;
+        try {
+            String url = baseUrl + "/api/v1/resource/" + currentTestClientResourceAccess_ResourceId;
+            ResponseEntity<ClientResponse> response = this.restTemplate.exchange(
+                    url, HttpMethod.DELETE, HttpEntity.EMPTY, ClientResponse.class
+            );
+            msg = response.getStatusCode().toString();
+        } catch (Exception ex) {
+            msg = ex.getMessage();
+        }
+        assertThat(msg).contains("422");
+        assertThat(msg).contains("Unprocessable Content");
+    }
 
 
     @Test
@@ -916,14 +985,14 @@ class ClientResourceAccessApiOracleE2E {
         String testAccessCode = "Test-ClientResourceAccess-Code";
         testDescription = "getClientResourceAccessByIds_exist-ClientResourceAccess-Description";
         ClientResourceAccess access = createClientResourceAccess(currentTestClientId,
-                                        currentTestResourceId, testAccessCode, testDescription);
+                currentTestResourceId, testAccessCode, testDescription);
         currentTestClientResourceAccess_ClientId = access.getClientId();
         currentTestClientResourceAccess_ResourceId = access.getResourceId();
 
         // Act:
         String url = baseUrl + "/api/v1/client-resource-access"
-                    + "/client/" + currentTestClientResourceAccess_ClientId
-                    + "/resource/" + currentTestClientResourceAccess_ResourceId;
+                + "/client/" + currentTestClientResourceAccess_ClientId
+                + "/resource/" + currentTestClientResourceAccess_ResourceId;
         ResponseEntity<ClientResourceAccessResponse> response = this.restTemplate.getForEntity(url, ClientResourceAccessResponse.class);
 
         // Assert:
@@ -1061,7 +1130,7 @@ class ClientResourceAccessApiOracleE2E {
         // Arrange: setUp
         String formattedDate = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
         String testKey = "Test-Client-Key" + formattedDate;
-         String testDescription = "searchClientResourceAccessByAccessCodeAndDescription_not_exist_accesscode-Client-Description";
+        String testDescription = "searchClientResourceAccessByAccessCodeAndDescription_not_exist_accesscode-Client-Description";
         Client client = createClient(testKey, testDescription);
         currentTestClientId = client.getId();
 
@@ -1150,8 +1219,8 @@ class ClientResourceAccessApiOracleE2E {
 
         // Act
         String url = baseUrl + "/api/v1/client-resource-access"
-                    + "/client/" + currentTestClientResourceAccess_ClientId
-                    + "/resource/" + currentTestClientResourceAccess_ResourceId;
+                + "/client/" + currentTestClientResourceAccess_ClientId
+                + "/resource/" + currentTestClientResourceAccess_ResourceId;
 
         ClientResourceAccessPostRequest request = ClientResourceAccessPostRequest.builder()
                 .accessCode(testAccessCode)
@@ -1350,8 +1419,8 @@ class ClientResourceAccessApiOracleE2E {
         HttpClientErrorException.NotFound exception = Assertions.assertThrows(
                 HttpClientErrorException.NotFound.class,
                 () -> this.restTemplate.exchange(
-                            url, HttpMethod.PATCH, requestEntity, ClientResourceAccessResponse.class
-                    )
+                        url, HttpMethod.PATCH, requestEntity, ClientResourceAccessResponse.class
+                )
         );
 
         // Verify the HTTP Status code is exactly 404
@@ -1400,8 +1469,8 @@ class ClientResourceAccessApiOracleE2E {
         HttpClientErrorException.NotFound exception = Assertions.assertThrows(
                 HttpClientErrorException.NotFound.class,
                 () -> this.restTemplate.exchange(
-                            url, HttpMethod.PATCH, requestEntity, ClientResourceAccessResponse.class
-                    )
+                        url, HttpMethod.PATCH, requestEntity, ClientResourceAccessResponse.class
+                )
         );
 
         // Verify the HTTP Status code is exactly 404
@@ -1420,9 +1489,9 @@ class ClientResourceAccessApiOracleE2E {
         // Act
         String url = baseUrl + "/api/v1/client";
         ClientPostRequest request = ClientPostRequest.builder()
-                        .key(clientKey)
-                        .description(clientDescription)
-                        .build();
+                .key(clientKey)
+                .description(clientDescription)
+                .build();
 
         ResponseEntity<ClientResponse> postResponse = this.restTemplate.postForEntity(url, request, ClientResponse.class);
 

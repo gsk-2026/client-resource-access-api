@@ -9,7 +9,7 @@ spring:
     database-platform: ${TEST_DB_PLATFORM:org.hibernate.dialect.H2Dialect}
     show-sql: false
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${TEST_DB_DDL_AUTO:create-drop}
     properties:
       hibernate:
         dialect: ${TEST_DB_PLATFORM:org.hibernate.dialect.H2Dialect}
