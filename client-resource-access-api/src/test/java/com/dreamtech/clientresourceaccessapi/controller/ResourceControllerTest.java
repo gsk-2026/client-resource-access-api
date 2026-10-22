@@ -1,7 +1,7 @@
 package com.dreamtech.clientresourceaccessapi.controller;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 import com.dreamtech.clientresourceaccessapi.service.ResourceService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -73,7 +73,7 @@ class ResourceControllerTest {
 
     @Test
     void getResourceById_notFound() throws Exception {
-        when(resourceService.getResourceById(987L)).thenThrow(new ClientResourceAccessApiRuntimeException("Resource 987 Not Found"));
+        when(resourceService.getResourceById(987L)).thenThrow(new HttpStatus404NotFoundException("Resource 987 Not Found"));
 
         mockMvc.perform(get("/api/v1/resource/987"))
                 .andDo(print())
@@ -99,8 +99,8 @@ class ResourceControllerTest {
 
     @Test
     void deleteResource_notFound() throws Exception {
-        //when(resourceService.getResourceById(654L)).thenThrow(new ClientResourceAccessApiRuntimeException("Resource 654 Not Found"));
-        doThrow(new ClientResourceAccessApiRuntimeException("Resource 654 Not Found"))
+        //when(resourceService.getResourceById(654L)).thenThrow(new HttpStatus404NotFoundException("Resource 654 Not Found"));
+        doThrow(new HttpStatus404NotFoundException("Resource 654 Not Found"))
                 .when(resourceService).deleteResourceById(654L);
 
         mockMvc.perform(delete("/api/v1/resource/654"))
@@ -114,7 +114,7 @@ class ResourceControllerTest {
 
         mockMvc.perform(get("/api/v1/resource/579/key"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("This is the Resource 579 type"));
+                .andExpect(jsonPath("$.text").value("This is the Resource 579 type"));
     }
 
     @Test
@@ -123,7 +123,7 @@ class ResourceControllerTest {
 
         mockMvc.perform(get("/api/v1/resource/321/description"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Linux Server #321 Description"));
+                .andExpect(jsonPath("$.text").value("Linux Server #321 Description"));
     }
 
     @Test
@@ -132,7 +132,7 @@ class ResourceControllerTest {
 
         mockMvc.perform(get("/api/v1/resource/456/description"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("#456 liner solution"));
+                .andExpect(jsonPath("$.text").value("#456 liner solution"));
     }
 
 
@@ -141,9 +141,9 @@ class ResourceControllerTest {
         when(resourceService.searchResources(null,null,null))
                 .thenReturn(List.of(
                         mockedResponse(111L,
-                            "Resource-111-Key",
-                            "Resource-111-Type",
-                            "This is Resource 111 Description: need quick fix"),
+                                "Resource-111-Key",
+                                "Resource-111-Type",
+                                "This is Resource 111 Description: need quick fix"),
                         mockedResponse(222L,
                                 "Resource-222-Key",
                                 "Resource-222-Type",
@@ -246,10 +246,10 @@ class ResourceControllerTest {
     @Test
     void postRequest_success() throws Exception {
         ResourcePostRequest request = ResourcePostRequest.builder()
-                        .key("App-Key")
-                        .type("App-Type")
-                        .description("App description")
-                        .build();
+                .key("App-Key")
+                .type("App-Type")
+                .description("App description")
+                .build();
 
         when(resourceService.createResource(any())).thenReturn(mockedResponse(
                 789L,
@@ -297,10 +297,10 @@ class ResourceControllerTest {
     @Test
     void putRequest_success() throws Exception {
         ResourcePutRequest request = ResourcePutRequest.builder()
-                        .key("New-Key")
-                                .type("New-Type")
-                                        .description("New Description")
-                                                .build();
+                .key("New-Key")
+                .type("New-Type")
+                .description("New Description")
+                .build();
 
         when(resourceService.replaceResource(eq(100L), any()))
                 .thenReturn(mockedResponse(99L,

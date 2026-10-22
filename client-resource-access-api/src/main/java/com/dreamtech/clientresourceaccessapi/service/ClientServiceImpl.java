@@ -1,12 +1,16 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus422UnprocessableException;
 import com.dreamtech.clientresourceaccessapi.model.Client;
+import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.repository.ClientRepository;
+import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +23,16 @@ public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
 
+    private final ClientResourceAccessRepository clientResourceAccessRepository;
+
     private final PasswordEncoder passwordEncoder;
 
-    private final String msg = "Client not found with id: {0}";
+    private final String msg404 = "Client not found with id: {0}";
+    private final String msg409 = "Client already exists with key: {0}";
 
-    public ClientServiceImpl(ClientRepository repository, PasswordEncoder passwordEncoder) {
+    public ClientServiceImpl(ClientRepository repository, ClientResourceAccessRepository craRepository, PasswordEncoder passwordEncoder) {
         this.clientRepository = repository;
+        this.clientResourceAccessRepository = craRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -35,7 +43,7 @@ public class ClientServiceImpl implements ClientService {
         boolean hasMyKey = clientList.stream().anyMatch(client -> request.key().equals(client.getKey()));
 
         if (!clientList.isEmpty() && hasMyKey) {
-            throw new IllegalArgumentException("Client already exists with key: " + request.key());
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
         }
 
         // Map DTO to Entity
@@ -75,6 +83,15 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public ClientResponse replaceClient(Long id, ClientPutRequest request) {
+        List<Client> clientList = clientRepository.findByKey(request.key());
+        boolean hasMyKey = clientList.stream().anyMatch(
+                client -> client.getKey().equals(request.key()) &&
+                        !client.getId().equals(id)
+        );
+        if (!clientList.isEmpty() && hasMyKey) {
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
+        }
+
         Optional<Client> optionalClient = clientRepository.findById(id);
 
         Client client = optionalClient.orElseGet(Client::new);
@@ -91,7 +108,16 @@ public class ClientServiceImpl implements ClientService {
     @Transactional
     public ClientResponse updateClient(Long id, ClientPatchRequest request) {
         Client existingClient = clientRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+
+        List<Client> clientList = clientRepository.findByKey(request.key());
+        boolean hasMyKey = clientList.stream().anyMatch(
+                client -> client.getKey().equals(request.key()) &&
+                        !client.getId().equals(id)
+        );
+        if (!clientList.isEmpty() && hasMyKey) {
+            throw new HttpStatus409AlreadyExistsException(format(msg409, request.key()));
+        }
 
         if (request.key() != null) {
             existingClient.setKey(request.key());
@@ -108,7 +134,7 @@ public class ClientServiceImpl implements ClientService {
     @Transactional
     public void updateSecret(Long id, ClientPatchSecretRequest request) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException("Client not found for id: " + id));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
 
         String secretHash = passwordEncoder.encode(request.newSecret());    // "dummy-hash"
 
@@ -120,9 +146,15 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public void deleteClientById(Long id) {
+        List<ClientResourceAccess> reponseList  = clientResourceAccessRepository.findByClientId(id);
+        if (reponseList != null && !reponseList.isEmpty()) {
+            String msg422 = "Client cannot be deleted because ClientResourceAccess has records with clientId: {0}";
+            throw (new HttpStatus422UnprocessableException(format(msg422, String.valueOf(id))));
+        }
+
         Optional<Client> optional = clientRepository.findById(id);
-        if (! optional.isPresent()) {
-            throw (new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+        if (optional.isEmpty()) {
+            throw (new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
         }
 
         clientRepository.deleteById(id);
@@ -132,7 +164,7 @@ public class ClientServiceImpl implements ClientService {
     @Transactional(readOnly = true)
     public ClientResponse getClientById(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
 
         return mapToResponse(client);
     }
@@ -140,15 +172,25 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional(readOnly = true)
     public String getKeyById(Long id){
+        /*
         return clientRepository.findKeyById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+         */
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return client.getKey();
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getDescriptionById(Long id) {
+        /*
         return clientRepository.findDescriptionById(id)
-                .orElseThrow(() -> new ClientResourceAccessApiRuntimeException(format(msg, String.valueOf(id))));
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+         */
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new HttpStatus404NotFoundException(format(msg404, String.valueOf(id))));
+        return client.getDescription();
     }
 
 

@@ -3,19 +3,21 @@ spring:
     name: client-resource-access-api
 
   datasource:
-    url: ${ORACLE_DB_URL:jdbc:oracle:thin:@10.0.0.252:1521:free}
-    username: ${ORACLE_DB_USER:system}
-    password: ${ORACLE_DB_PSWD:Sankui2026}
-    driver-class-name: ${ORACLE_DB_DRIVER:oracle.jdbc.OracleDriver}
+    url: ${APP_DB_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;NON_KEYWORDS=KEY,VALUE}
+    username: ${APP_DB_USER:sa}
+    password: ${APP_DB_PSWD:}
+    driver-class-name: ${APP_DB_DRIVER:org.h2.Driver}
 
   jpa:
+    database-platform: ${APP_DB_PLATFORM:org.hibernate.dialect.H2Dialect}
     show-sql: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${APP_DB_DDL_AUTO:create-drop}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.OracleDialect
+        dialect: ${APP_DB_PLATFORM:org.hibernate.dialect.H2Dialect}
         format_sql: true
+
 
 management:
   endpoints:

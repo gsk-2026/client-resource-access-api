@@ -1,7 +1,7 @@
 package com.dreamtech.clientresourceaccessapi.controller;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 import com.dreamtech.clientresourceaccessapi.service.ClientService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -104,11 +104,11 @@ class ClientControllerTest {
         // Given:
         Long missingClientId = 369L;
         String expectedMsg = "Client not found with id: " + missingClientId;
-        when(clientService.getClientById(missingClientId)).thenThrow(new ClientResourceAccessApiRuntimeException(expectedMsg));
+        when(clientService.getClientById(missingClientId)).thenThrow(new HttpStatus404NotFoundException(expectedMsg));
 
         // When & Then:
         mockMvc.perform(get("/api/v1/client/{id}", missingClientId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());  // Asserts HTTP 404
     }
 
@@ -128,12 +128,12 @@ class ClientControllerTest {
     void deleteClientById_when_throw_exception() throws Exception {
         // Given:deleteClientById
         Long missingClientId = 123L;
-        doThrow(new ClientResourceAccessApiRuntimeException("Client not found with id: " + missingClientId))
+        doThrow(new HttpStatus404NotFoundException("Client not found with id: " + missingClientId))
                 .when(clientService).deleteClientById(missingClientId);
 
         // When & Then:
         mockMvc.perform(delete("/api/v1/client/{id}", missingClientId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());  // HTTP 404
     }
 
@@ -148,14 +148,14 @@ class ClientControllerTest {
         // When & Then:
         mockMvc.perform(get("/api/v1/client/{id}/key", clientId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(clientKey));
+                .andExpect(jsonPath("$.text").value(clientKey));
     }
 
     @Test
     void getClientKeyById_when_exception() throws Exception {
         // Given:
         Long missingClientId = 135L;
-        doThrow(new ClientResourceAccessApiRuntimeException("Client not found with id: " + missingClientId))
+        doThrow(new HttpStatus404NotFoundException("Client not found with id: " + missingClientId))
                 .when(clientService).getKeyById(missingClientId);
 
         // When & Then:
@@ -174,14 +174,14 @@ class ClientControllerTest {
         // When & Then:
         mockMvc.perform(get("/api/v1/client/{id}/description", String.valueOf(clientId)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(clientDescription));
+                .andExpect(jsonPath("$.text").value(clientDescription));
     }
 
     @Test
     void getClientDescriptionById_when_exception() throws Exception {
         // Given: Mocking service behavior for NAME="135NAME"
         Long missingClientId = 13579L;
-        doThrow(new ClientResourceAccessApiRuntimeException("Client not found with id: " + missingClientId))
+        doThrow(new HttpStatus404NotFoundException("Client not found with id: " + missingClientId))
                 .when(clientService).getDescriptionById(missingClientId);
 
         // When & Then:
@@ -310,8 +310,8 @@ class ClientControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/client/search")
-                .param("key", clientKey)
-                .param("description", clientDescription)
+                        .param("key", clientKey)
+                        .param("description", clientDescription)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
@@ -342,8 +342,8 @@ class ClientControllerTest {
 
         // Act & Assert:
         mockMvc.perform(post("/api/v1/client")
-                    .contentType(MediaType.APPLICATION_JSON)        // Set Content-Type: application/json
-                    .content(jsonPayload))
+                        .contentType(MediaType.APPLICATION_JSON)        // Set Content-Type: application/json
+                        .content(jsonPayload))
                 .andExpect(status().isCreated())                         // Expect HTTP 200 OK
                 .andExpect(jsonPath("$.id").value(mockResponse.id()))
                 .andExpect(jsonPath("$.key").value(mockResponse.key()))
@@ -362,14 +362,14 @@ class ClientControllerTest {
 
         String jsonPayload = objectMapper.writeValueAsString(request);
 
-        doThrow(new ClientResourceAccessApiRuntimeException("Client exists with key: " + existingClientKey))
+        doThrow(new HttpStatus404NotFoundException("Client exists with key: " + existingClientKey))
                 .when(clientService).createClient(any(ClientPostRequest.class));
 
         // Act & Assert:
         mockMvc.perform(post("/api/v1/client")
                         .contentType(MediaType.APPLICATION_JSON)    // Set Content-Type: application/json
                         .content(jsonPayload))
-                        .andExpect(status().isNotFound());      // Expect HTTP 404
+                .andExpect(status().isNotFound());      // Expect HTTP 404
     }
 
 
@@ -444,7 +444,7 @@ class ClientControllerTest {
                 .build();
         String jsonPayload = objectMapper.writeValueAsString(request);
 
-        doThrow(new ClientResourceAccessApiRuntimeException("Client not found with key: The-Missing-Client-Name"))
+        doThrow(new HttpStatus404NotFoundException("Client not found with key: The-Missing-Client-Name"))
                 .when(clientService).replaceClient(any(Long.class), any(ClientPutRequest.class));
 
         // When & Then:
@@ -522,7 +522,7 @@ class ClientControllerTest {
                 .build();
         String jsonPayload = objectMapper.writeValueAsString(request);
 
-        doThrow(new ClientResourceAccessApiRuntimeException("Client not found with key: The-Missing-Client-Name"))
+        doThrow(new HttpStatus404NotFoundException("Client not found with key: The-Missing-Client-Name"))
                 .when(clientService).updateClient(any(Long.class), any(ClientPatchRequest.class));
 
         // When & Then:
@@ -608,6 +608,36 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$.XCustomClientID").doesNotExist())
                 .andExpect(jsonPath("$.X-Extra-Header-One").value(header1))
                 .andExpect(jsonPath("$.X-Extra-Header-Two").value(header2));
+    }
+
+    @Test
+    void searchClients_without_filters_returns_all_clients() throws Exception {
+        // Given
+        List<ClientResponse> clientResponseList = List.of(
+                ClientResponse.builder().id(1L).key("client-key-1").description("first client").build(),
+                ClientResponse.builder().id(2L).key("client-key-2").description("second client").build()
+        );
+
+        when(clientService.searchClients(null, null)).thenReturn(clientResponseList);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/client/search"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].key").value("client-key-1"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].description").value("second client"));
+
+        verify(clientService).searchClients(null, null);
+    }
+
+    @Test
+    void authService_without_authorization_header_returns_bad_request() throws Exception {
+        mockMvc.perform(get("/api/v1/client/auth")
+                        .header("X-Extra-Header-One", "header-value")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
 }

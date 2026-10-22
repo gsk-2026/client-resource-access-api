@@ -4,7 +4,7 @@ import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPatchReques
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPostRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessPutRequest;
 import com.dreamtech.clientresourceaccessapi.dto.ClientResourceAccessResponse;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 import com.dreamtech.clientresourceaccessapi.service.ClientResourceAccessService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +86,7 @@ class ClientResourceAccessControllerTest {
     void getByIds_notFound() throws Exception {
         // Given
         given(service.getByIds(1002L, 2002L))
-                .willThrow(new ClientResourceAccessApiRuntimeException("1002 2002 Not Found"));
+                .willThrow(new HttpStatus404NotFoundException("1002 2002 Not Found"));
 
         // When / Then
         mockMvc.perform(get("/api/v1/client-resource-access/client/1002/resource/2002"))
@@ -115,7 +115,7 @@ class ClientResourceAccessControllerTest {
 
     @Test
     void deleteByIds_notFound() throws Exception {
-        willThrow(new ClientResourceAccessApiRuntimeException("1004 2004 Not Found"))
+        willThrow(new HttpStatus404NotFoundException("1004 2004 Not Found"))
                 .given(service)
                 .deleteByIds(1004L, 2004L);
 
@@ -135,7 +135,7 @@ class ClientResourceAccessControllerTest {
 
         mockMvc.perform(get("/api/v1/client-resource-access/client/1005/resource/2005/access-code"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("AccessCode-1005-2005"));
+                .andExpect(jsonPath("$.text").value("AccessCode-1005-2005"));
 
         then(service)
                 .should()
@@ -146,7 +146,7 @@ class ClientResourceAccessControllerTest {
     void getAccessCodeByIds_notFound() throws Exception {
         // Given
         given(service.getAccessCodeByIds(1006L, 2006L))
-                .willThrow(new ClientResourceAccessApiRuntimeException("1006 2006 Not Found"));
+                .willThrow(new HttpStatus404NotFoundException("1006 2006 Not Found"));
 
         // When / Then
         mockMvc.perform(get("/api/v1/client-resource-access/client/1006/resource/2006/access-code"))
@@ -165,7 +165,7 @@ class ClientResourceAccessControllerTest {
 
         mockMvc.perform(get("/api/v1/client-resource-access/client/1007/resource/2007/description"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Description-1007-2007"));
+                .andExpect(jsonPath("$.text").value("Description-1007-2007"));
 
         then(service)
                 .should()
@@ -176,7 +176,7 @@ class ClientResourceAccessControllerTest {
     void getDescriptionByIds_notFound() throws Exception {
         // Given
         given(service.getDescriptionByIds(1008L, 2008L))
-                .willThrow(new ClientResourceAccessApiRuntimeException("1008 2008 Not Found"));
+                .willThrow(new HttpStatus404NotFoundException("1008 2008 Not Found"));
 
         // When / Then
         mockMvc.perform(get("/api/v1/client-resource-access/client/1008/resource/2008/description"))
@@ -200,7 +200,7 @@ class ClientResourceAccessControllerTest {
                         "Description-1010-2010")));
 
         mockMvc.perform(get("/api/v1/client-resource-access/search")
-                                .param("access-code","AccessCode-1010-2010"))
+                        .param("access-code","AccessCode-1010-2010"))
 
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -311,8 +311,8 @@ class ClientResourceAccessControllerTest {
                         "AccessCode-1111-2222", "Description-1111-2222-Update"));
 
         mockMvc.perform(put("/api/v1/client-resource-access/client/1014/resource/2014")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.clientId").value(1111L))
                 .andExpect(jsonPath("$.resourceId").value(2222L))
@@ -345,8 +345,8 @@ class ClientResourceAccessControllerTest {
                         "Description-Updated"));
 
         mockMvc.perform(patch("/api/v1/client-resource-access/client/1015/resource/2015")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.clientId").value(10015L))
                 .andExpect(jsonPath("$.resourceId").value(20015L))

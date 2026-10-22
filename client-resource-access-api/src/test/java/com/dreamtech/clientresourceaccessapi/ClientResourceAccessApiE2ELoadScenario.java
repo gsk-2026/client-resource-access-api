@@ -81,7 +81,7 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
             http("1003. GET - Fetch Client - Key")
                     .get("/client/#{myClientId}/key")
                     .check(status().is(200))
-                    .check(bodyString().isEL("Key-#{uniqueClientMark}")),
+                    .check(jsonPath("$.text").isEL("Key-#{uniqueClientMark}")),
 
             pause(pauseTime),
 
@@ -89,7 +89,7 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
             http("1004. GET - Fetch Client - Description")
                     .get("/client/#{myClientId}/description")
                     .check(status().is(200))
-                    .check(bodyString().isEL("Desc-#{uniqueClientMark}")),
+                    .check(jsonPath("$.text").isEL("Desc-#{uniqueClientMark}")),
 
             pause(pauseTime),
 
@@ -164,21 +164,21 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
             .exec(http("2003. GET - Fetch Resource - Key")
                     .get("/resource/#{myResourceId}/key")
                     .check(status().is(200))
-                    .check(bodyString().isEL("Resource-Key-#{uniqueResourceMark}")))
+                    .check(jsonPath("$.text").isEL("Resource-Key-#{uniqueResourceMark}")))
             .pause(pauseTime)
 
             // 2004. GET - Fetch Resource Type
             .exec(http("2004. GET - Fetch Resource - Type")
                     .get("/resource/#{myResourceId}/type")
                     .check(status().is(200))
-                    .check(bodyString().isEL("Resource-Type-#{uniqueResourceMark}")))
+                    .check(jsonPath("$.text").isEL("Resource-Type-#{uniqueResourceMark}")))
             .pause(pauseTime)
 
             // 2005. GET - Fetch Resource Description
             .exec(http("2005. GET - Fetch Resource - Description")
                     .get("/resource/#{myResourceId}/description")
                     .check(status().is(200))
-                    .check(bodyString().isEL("Resource-Description-#{uniqueResourceMark}")))
+                    .check(jsonPath("$.text").isEL("Resource-Description-#{uniqueResourceMark}")))
             .pause(pauseTime)
 
             // 2006. PUT - Update Resource
@@ -267,7 +267,7 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
             http("3003. GET - Fetch Client Resource Access - AccessCode")
                     .get("/client-resource-access/client/#{myCRAClientId}/resource/#{myCRAResourceId}/access-code")
                     .check(status().is(200))
-                    .check(bodyString().isEL("CRA-AccessCode-#{uniqueAccessMark}")),
+                    .check(jsonPath("$.text").isEL("CRA-AccessCode-#{uniqueAccessMark}")),
 
             pause(pauseTime),
 
@@ -321,13 +321,13 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
                 accessCrudScenario.injectOpen(nothingFor(Duration.ofSeconds(30)), atOnceUsers(loops))
 
         )
-        .protocols(httpProtocol)
-        .assertions(
-                global().successfulRequests().percent().gte(90.0),
-                global().responseTime().mean().lte(300),
-                global().responseTime().percentile3().lte(800),
-                global().failedRequests().count().lte(5L)
-        );
+                .protocols(httpProtocol)
+                .assertions(
+                        global().successfulRequests().percent().gte(90.0),
+                        global().responseTime().mean().lte(300),
+                        global().responseTime().percentile3().lte(800),
+                        global().failedRequests().count().lte(5L)
+                );
     }
 
     private static String getPortFromProperties() {
@@ -341,7 +341,7 @@ public class ClientResourceAccessApiE2ELoadScenario extends Simulation {
                 return "8080"; // Default fallback if file is missing
             }
             prop.load(input);
-              return prop.getProperty("server.port", "8080");
+            return prop.getProperty("server.port", "8080");
 
         } catch (Exception ex) {
             return "8080"; // Default fallback on error

@@ -46,12 +46,13 @@ public class ClientResourceAccessApiE2ELoadRunner {
 
         String[] customizedArgs = new String[] {
                 "--spring.profiles.active=load-test",
-                "--spring.jpa.hibernate.ddl-auto=update",
                 "--spring.datasource.url=" + oracleContainer.getJdbcUrl(),
                 "--spring.datasource.username=" + oracleContainer.getUsername(),
                 "--spring.datasource.password=" + oracleContainer.getPassword(),
                 "--server.port=" + serverPort,
                 "--spring.datasource.hikari.maximum-pool-size=50",
+                "--spring.jpa.hibernate.ddl-auto=update",
+                "--spring.jpa.database-platform=org.hibernate.dialect.OracleDialect",
                 "--logging.level.root=WARN"
         };
 
@@ -63,17 +64,17 @@ public class ClientResourceAccessApiE2ELoadRunner {
 
         // 4. Boot up the Spring application context holding these values alive
         ConfigurableApplicationContext context = new SpringApplicationBuilder(ClientResourceAccessApiApplication.class)
-               .run(customArgs);
+                .run(customArgs);
 
         // Extract the actual DataSource Bean that Spring created using your map
         DataSource dataSource = context.getBean(DataSource.class);
         printActiveDatasource(dataSource);
 
-        System.out.println("🚀 Spring Boot application context is running at: http://localhost:" + serverPort + "/api/v1");
+        System.out.println(" Spring Boot application context is running at: http://localhost:" + serverPort + "/api/v1");
 
         // 5. Trigger the Gatling directly from cmd line:
         //    mvn gatling:test -Dgatling.simulationClass=com.dreamtech.clientresourceaccessapi.ClientResourceAccessApiE2ELoadScenario
-        System.out.println("🔥 Launching Gatling Load Simulation...");
+        System.out.println(" Launching Gatling Load Simulation...");
 
         int gatlingExitCode = -1;
         try {
@@ -95,7 +96,12 @@ public class ClientResourceAccessApiE2ELoadRunner {
                 };
             }
 
-            File projectDir = new File( System.getProperty("user.dir"), "client-resource-access-api" );
+            //File projectDir = new File( System.getProperty("user.dir"), "client-resource-access-api" );
+            String currentDir = System.getProperty("user.dir");
+            String projectPath = currentDir.endsWith("client-resource-access-api")
+                    ? currentDir
+                    : currentDir + "/client-resource-access-api";
+            File projectDir = new File(projectPath);
 
             // Set up the process builder to stream real-time logs to your IDE window
             ProcessBuilder processBuilder = new ProcessBuilder(mavenCommand);
@@ -117,7 +123,7 @@ public class ClientResourceAccessApiE2ELoadRunner {
             System.out.println("🏁 Gatling test finished execution with code: " + gatlingExitCode);
 
         } catch (Exception e) {
-            System.err.println("❌ Critical failure launching Gatling simulation process: " + e);
+            System.err.println(" Critical failure launching Gatling simulation process: " + e);
         }
 
         // 6. Gracefully shut down Spring and let the hook stop Docker
@@ -126,7 +132,6 @@ public class ClientResourceAccessApiE2ELoadRunner {
 
     }
 
-    // A. Clean diagnostic print helper
     private static void printActiveDatasource(DataSource dataSource) {
         try (Connection connection = dataSource.getConnection()) {
             System.out.println("Spring Application Datasource JDBC URL: " + connection.getMetaData().getURL());

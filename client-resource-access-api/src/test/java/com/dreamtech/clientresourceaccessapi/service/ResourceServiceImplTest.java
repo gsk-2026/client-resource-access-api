@@ -1,8 +1,10 @@
 package com.dreamtech.clientresourceaccessapi.service;
 
 import com.dreamtech.clientresourceaccessapi.dto.*;
-import com.dreamtech.clientresourceaccessapi.exception.ClientResourceAccessApiRuntimeException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus422UnprocessableException;
+import com.dreamtech.clientresourceaccessapi.model.ClientResourceAccess;
 import com.dreamtech.clientresourceaccessapi.model.Resource;
+import com.dreamtech.clientresourceaccessapi.repository.ClientResourceAccessRepository;
 import com.dreamtech.clientresourceaccessapi.repository.ResourceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus409AlreadyExistsException;
+import com.dreamtech.clientresourceaccessapi.exception.HttpStatus404NotFoundException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -28,13 +30,16 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test") // Activates application-test.yml
+@ActiveProfiles("h2mem-test") // Activates application-h2mem-test.yml
 class ResourceServiceImplTest {
     /*  Pure Unit Test.
         Unit Test for ResourceServiceImpl using Mock & InjectMocks.  */
 
     @Mock
     private ResourceRepository resourceRepository;
+
+    @Mock
+    private ClientResourceAccessRepository clientResourceAccessRepository;
 
     @InjectMocks
     private ResourceServiceImpl resourceService;
@@ -53,7 +58,7 @@ class ResourceServiceImplTest {
     @Test
     void testActiveProfile() {
         String[] env = environment.getActiveProfiles();
-        assertThat(Arrays.toString(env)).isEqualTo("[test]");
+        assertThat(Arrays.toString(env)).isEqualTo("[h2mem-test]");
     }
 
     @Test
@@ -87,22 +92,22 @@ class ResourceServiceImplTest {
     }
 
     @Test
-    void createResource_duplicateKey() {
+    void createResource_existing_eKey() {
         Resource existing =  mockedResource(
-                        10L,
-                        "KEY",
-                        "TYPE",
-                        "Existing - DESCRIPTION");
+                10L,
+                "KEY",
+                "TYPE",
+                "Existing - DESCRIPTION");
 
         when(resourceRepository.findByKey("KEY")).thenReturn(List.of(existing));
 
         ResourcePostRequest request = ResourcePostRequest.builder()
                 .key("KEY")
-                    .type("TYPE")
-                        .description("New - DESCRIPTION")
-                            .build();
+                .type("TYPE")
+                .description("New - DESCRIPTION")
+                .build();
 
-        assertThrows(IllegalArgumentException.class, () -> resourceService.createResource(request));
+        assertThrows(HttpStatus409AlreadyExistsException.class, () -> resourceService.createResource(request));
 
         verify(resourceRepository, never()).save(any());
     }
@@ -112,10 +117,10 @@ class ResourceServiceImplTest {
     @Test
     void getResourceById_success() {
         Resource resource = mockedResource(
-                        123L,
-                        "My-Key",
-                        "My-Type",
-                        "My dsecription");
+                123L,
+                "My-Key",
+                "My-Type",
+                "My description");
 
         when(resourceRepository.findById(123L)).thenReturn(Optional.of(resource));
 
@@ -132,7 +137,7 @@ class ResourceServiceImplTest {
     void getResourceById_notFound() {
         when(resourceRepository.findById(987L)).thenReturn(Optional.empty());
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.getResourceById(987L));
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getResourceById(987L));
     }
 
 
@@ -194,10 +199,10 @@ class ResourceServiceImplTest {
     @Test
     void updateResource_descriptionOnly() {
         Resource resource = mockedResource(
-                        135L,
-                        "App-Key",
-                        "App-Type",
-                        "Old App Description");
+                135L,
+                "App-Key",
+                "App-Type",
+                "Old App Description");
 
         when(resourceRepository.findById(135L)).thenReturn(Optional.of(resource));
 
@@ -245,10 +250,10 @@ class ResourceServiceImplTest {
         assertEquals(request.description(), response.description());
     }
 
-
     @Test
-    void replaceResource_existing() {
-        Resource resource = mockedResource(123L,
+    void replaceResource_existing_id() {
+        long resource_id = 123L;
+        Resource resource = mockedResource(resource_id,
                 "old-key",
                 "old-type",
                 null);
@@ -263,11 +268,11 @@ class ResourceServiceImplTest {
                 .description(mockResource.getDescription())
                 .build();
 
-        when(resourceRepository.findById(any(Long.class))).thenReturn(Optional.of(resource));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(resource));
         when(resourceRepository.save(any(Resource.class))).thenReturn(mockResource);
 
         // WHEN & THEN
-        ResourceResponse response = resourceService.replaceResource(123L, request);
+        ResourceResponse response = resourceService.replaceResource(resource_id, request);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(mockResource.getId());
@@ -279,6 +284,7 @@ class ResourceServiceImplTest {
 
     @Test
     void replaceResource_new_resource() {
+        long resource_id = 987;
         Resource mockResource = mockedResource(369L,
                 "new-key",
                 "new-type",
@@ -290,11 +296,11 @@ class ResourceServiceImplTest {
                 .description(mockResource.getDescription())
                 .build();
 
-        when(resourceRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.empty());
         when(resourceRepository.save(any(Resource.class))).thenReturn(mockResource);
 
         // WHEN & THEN
-        ResourceResponse response = resourceService.replaceResource(987L, request);
+        ResourceResponse response = resourceService.replaceResource(resource_id, request);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(mockResource.getId());
@@ -304,8 +310,28 @@ class ResourceServiceImplTest {
         verify(resourceRepository, times(1)).save(any(Resource.class));
     }
 
+    @Test
+    void replaceResource_existing_key_exception() {
+        long resource_id = 123L;
+        Resource mockResource = mockedResource(456L,
+                "Resource-key",
+                "Resource-type",
+                "Resource--description");
 
+        ResourcePutRequest request = ResourcePutRequest.builder()
+                .key(mockResource.getKey())
+                .type(mockResource.getType())
+                .description(mockResource.getDescription())
+                .build();
 
+        when(resourceRepository.findByKey(mockResource.getKey())).thenReturn(List.of(mockResource));
+
+        // WHEN & THEN
+        String msg409 = "Resource already exists with key: Resource-key";
+        assertThatThrownBy(() -> resourceService.replaceResource(resource_id, request))
+                .isInstanceOf(HttpStatus409AlreadyExistsException.class)
+                .hasMessageContaining(msg409);
+    }
 
     @Test
     void searchResources_AllParamsPresent_ShouldCallFindByKeyAndTypeAndDescription() {
@@ -402,11 +428,12 @@ class ResourceServiceImplTest {
     @Test
     void deleteResourceById_success() {
         Resource resource = mockedResource(
-                        357L,
-                        "357-Key",
-                        "357-Type",
-                        "357 description");
+                357L,
+                "357-Key",
+                "357-Type",
+                "357 description");
 
+        when(clientResourceAccessRepository.findByResourceId(357L)).thenReturn(new ArrayList<>());
         when(resourceRepository.findById(357L)).thenReturn(Optional.of(resource));
 
         resourceService.deleteResourceById(357L);
@@ -416,43 +443,92 @@ class ResourceServiceImplTest {
 
     @Test
     void deleteResourceById_notFound() {
+        when(clientResourceAccessRepository.findByResourceId(333L)).thenReturn(new ArrayList<>());
         when(resourceRepository.findById(333L)).thenReturn(Optional.empty());
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.deleteResourceById(333L));
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.deleteResourceById(333L));
 
+        verify(resourceRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void deleteResourceById_unprocessible() {
+        when(clientResourceAccessRepository.findByResourceId(3690L)).thenReturn(List.of(new ClientResourceAccess()));
+
+        assertThrows(HttpStatus422UnprocessableException.class, () -> resourceService.deleteResourceById(3690L));
+
+        verify(resourceRepository, never()).findById(anyLong());
         verify(resourceRepository, never()).deleteById(anyLong());
     }
 
 
     @Test
     void getKeyById_success() {
-        when(resourceRepository.findKeyById(1L)).thenReturn(Optional.of("Returned-Key"));
+        long resource_id = 1L;
+        String mockedKey = "Returned-Key";
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+        mockedResource.setKey(mockedKey);
 
-        assertEquals("Returned-Key", resourceService.getKeyById(1L));
+        //when(resourceRepository.findKeyById(resource_id)).thenReturn(Optional.of(mockedKey));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(mockedResource));
+
+        assertEquals(mockedKey, resourceService.getKeyById(resource_id));
     }
 
     @Test
     void getTypeById_notFound() {
-        when(resourceRepository.findKeyById(1L)).thenReturn(Optional.empty());
+        long resource_id = 1L;
+        String mockedType = "Returned-Type";
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+        mockedResource.setType(mockedType);
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.getKeyById(1L));
+        //when(resourceRepository.findKeyById(resource_id)).thenReturn(Optional.empty());
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.empty());
+
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getKeyById(resource_id));
     }
 
     @Test
     void getDescriptionById_success() {
-        when(resourceRepository.findDescriptionById(1L)).thenReturn(Optional.of("Returned Description"));
+        long resource_id = 1L;
+        String mockedDescription = "Returned Description";
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+        mockedResource.setDescription(mockedDescription);
 
-        assertEquals("Returned Description", resourceService.getDescriptionById(1L));
+        //when(resourceRepository.findDescriptionById(resource_id)).thenReturn(Optional.of(mockedDescription));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(mockedResource));
+
+        assertEquals(mockedDescription, resourceService.getDescriptionById(resource_id));
+    }
+
+    @Test
+    void getDescriptionById_null_description_success() {
+        long resource_id = 1L;
+        Resource mockedResource = new Resource();
+        mockedResource.setId(resource_id);
+
+        //when(resourceRepository.findDescriptionById(resource_id)).thenReturn(Optional.of(mockedDescription));
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.of(mockedResource));
+
+        String description = resourceService.getDescriptionById(resource_id);
+
+        assertThat(description).isNull();
     }
 
     @Test
     void getDescriptionById_notFound() {
-        when(resourceRepository.findDescriptionById(1L)).thenReturn(Optional.empty());
+        long resource_id = 1L;
 
-        assertThrows(ClientResourceAccessApiRuntimeException.class, () -> resourceService.getDescriptionById(1L));
+        //when(resourceRepository.findDescriptionById(resource_id)).thenReturn(Optional.empty());
+        when(resourceRepository.findById(resource_id)).thenReturn(Optional.empty());
+
+        assertThrows(HttpStatus404NotFoundException.class, () -> resourceService.getDescriptionById(resource_id));
     }
 
-    
+
 
     private Resource mockedResource(
             Long resourceId,
